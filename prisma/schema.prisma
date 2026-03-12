@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  avatarUrl    String?
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  accounts             Account[]
+  sessions             Session[]
+  teamMemberships      TeamMember[]
+  ownedTeams           Team[]              @relation("TeamOwner")
+  createdRooms         DecisionRoom[]      @relation("RoomCreator")
+  positions            Position[]
+  roomParticipations   RoomParticipant[]
+  decisionAcceptances  DecisionAcceptance[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner   User         @relation("TeamOwner", fields: [ownerId], references: [id])
+  members TeamMember[]
+  rooms   DecisionRoom[]
+}
+
+model TeamMember {
+  id       String   @id @default(cuid())
+  teamId   String
+  userId   String
+  role     String   @default("member")
+  joinedAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+}
+
+model DecisionRoom {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  teamId       String?
+  creatorId    String
+  criteria     String   @default("{\"speed\":0.5,\"risk\":0.5,\"cost\":0.5,\"innovation\":0.5}")
+  status       String   @default("collecting")
+  currentRound Int      @default(1)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  team         Team?            @relation(fields: [teamId], references: [id])
+  creator      User             @relation("RoomCreator", fields: [creatorId], references: [id])
+  participants RoomParticipant[]
+  positions    Position[]
+  syntheses    Synthesis[]
+  decision     Decision?
+  documents    RoomDocument[]
+}
+
+model RoomDocument {
+  id        String   @id @default(cuid())
+  roomId    String
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+
+  room DecisionRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+model RoomParticipant {
+  id       String   @id @default(cuid())
+  roomId   String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  room DecisionRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+}
+
+model Position {
+  id          String   @id @default(cuid())
+  roomId      String
+  userId      String
+  roundNumber Int
+  content     String
+  createdAt   DateTime @default(now())
+
+  room DecisionRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Synthesis {
+  id               String   @id @default(cuid())
+  roomId           String
+  roundNumber      Int
+  consensusPoints  String   @default("[]")
+  conflicts        String   @default("[]")
+  argumentRankings String   @default("[]")
+  recommendation   String
+  confidence       Int
+  rawAiResponse    String
+  createdAt        DateTime @default(now())
+
+  room DecisionRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, roundNumber])
+}
+
+model Decision {
+  id                  String   @id @default(cuid())
+  roomId              String   @unique
+  finalRecommendation String
+  decisionDate        DateTime @default(now())
+  loggedAt            DateTime @default(now())
+
+  room        DecisionRoom       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  acceptances DecisionAcceptance[]
+}
+
+model DecisionAcceptance {
+  id         String   @id @default(cuid())
+  decisionId String
+  userId     String
+  acceptedAt DateTime @default(now())
+
+  decision Decision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([decisionId, userId])
+}
