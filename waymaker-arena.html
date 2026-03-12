@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waymaker — Decision Arena</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --navy: #0F1B2D; --navy2: #1A2940; --teal: #0D9488; --teal-light: #14B8A6;
+    --gold: #F59E0B; --white: #FFFFFF; --off-white: #F8FAFC; --gray: #94A3B8;
+    --gray-light: #E2E8F0; --dark: #1E293B; --mid: #475569;
+    --red: #EF4444; --green: #22C55E; --purple: #8B5CF6; --pink: #EC4899; --blue: #3B82F6;
+  }
+  body { font-family: 'Inter', sans-serif; background: var(--navy); color: var(--gray-light); min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    padding: 20px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .logo { font-size: 18px; font-weight: 800; color: white; letter-spacing: 2px; }
+  .logo span { color: var(--teal-light); }
+  .room-info { display: flex; align-items: center; gap: 16px; }
+  .room-title { font-size: 14px; font-weight: 600; color: white; }
+  .room-meta { font-size: 12px; color: var(--gray); }
+  .phase-indicator {
+    display: flex; gap: 4px; align-items: center;
+    padding: 6px 14px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+  }
+  .phase-indicator.collecting { background: rgba(59,130,246,0.15); color: var(--blue); }
+  .phase-indicator.analyzing { background: rgba(245,158,11,0.15); color: var(--gold); }
+  .phase-indicator.converging { background: rgba(139,92,246,0.15); color: var(--purple); }
+  .phase-indicator.decided { background: rgba(34,197,94,0.15); color: var(--green); }
+  .phase-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 1.5s ease infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* MAIN LAYOUT */
+  .main { display: grid; grid-template-columns: 300px 1fr 320px; height: calc(100vh - 65px); }
+
+  /* LEFT PANEL: INPUTS */
+  .panel-left {
+    border-right: 1px solid rgba(255,255,255,0.06);
+    overflow-y: auto; padding: 20px;
+  }
+  .panel-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); margin-bottom: 16px; }
+
+  .input-card {
+    background: var(--navy2);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .input-card:hover { border-color: rgba(255,255,255,0.15); }
+  .input-card.active { border-color: var(--teal); background: rgba(13,148,136,0.05); }
+  .input-card .avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: white; margin-right: 8px;
+  }
+  .input-card .name { font-size: 13px; font-weight: 600; color: white; }
+  .input-card .role { font-size: 11px; color: var(--gray); }
+  .input-card .position { font-size: 12px; color: var(--gray-light); margin-top: 10px; line-height: 1.6; }
+  .input-card .stance {
+    display: inline-block; margin-top: 8px; padding: 3px 10px;
+    border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+  }
+  .stance.for { background: rgba(34,197,94,0.15); color: var(--green); }
+  .stance.against { background: rgba(239,68,68,0.15); color: var(--red); }
+  .stance.conditional { background: rgba(245,158,11,0.15); color: var(--gold); }
+
+  /* CENTER: ARENA */
+  .arena { position: relative; overflow: hidden; background: radial-gradient(circle at 50% 50%, rgba(13,148,136,0.03) 0%, transparent 70%); }
+  .arena-svg { width: 100%; height: 100%; }
+
+  /* Node styles */
+  .node-group { cursor: pointer; transition: transform 0.3s; }
+  .node-group:hover { transform: scale(1.05); }
+  .node-circle { transition: all 0.5s ease; }
+  .node-label { fill: white; font-family: 'Inter', sans-serif; font-weight: 700; }
+  .node-sublabel { fill: var(--gray); font-family: 'Inter', sans-serif; }
+
+  /* Edges */
+  .edge-agree { stroke: var(--green); stroke-opacity: 0.3; stroke-width: 2; stroke-dasharray: 6 4; }
+  .edge-conflict { stroke: var(--red); stroke-opacity: 0.3; stroke-width: 2; }
+  .edge-partial { stroke: var(--gold); stroke-opacity: 0.3; stroke-width: 2; stroke-dasharray: 3 3; }
+
+  /* Center node */
+  .consensus-node { transition: all 0.8s ease; }
+
+  /* RIGHT PANEL: ANALYSIS */
+  .panel-right {
+    border-left: 1px solid rgba(255,255,255,0.06);
+    overflow-y: auto; padding: 20px;
+  }
+
+  /* Phase timeline */
+  .phase-timeline { margin-bottom: 24px; }
+  .phase-step {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 8px 0; position: relative;
+  }
+  .phase-step::before {
+    content: ''; position: absolute; left: 11px; top: 32px;
+    width: 2px; height: calc(100% - 16px);
+    background: rgba(255,255,255,0.06);
+  }
+  .phase-step:last-child::before { display: none; }
+  .phase-step .dot {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.1);
+    color: var(--gray);
+    transition: all 0.3s;
+  }
+  .phase-step.done .dot { background: var(--teal); border-color: var(--teal); color: white; }
+  .phase-step.active .dot { border-color: var(--gold); color: var(--gold); animation: pulse 1.5s ease infinite; }
+  .phase-step .info h4 { font-size: 13px; font-weight: 600; color: white; }
+  .phase-step .info p { font-size: 11px; color: var(--gray); margin-top: 2px; }
+  .phase-step.future .info h4 { color: var(--mid); }
+
+  /* Argument cards */
+  .arg-section { margin-bottom: 20px; }
+  .arg-section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .arg-card {
+    background: var(--navy2);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--gray-light);
+    position: relative;
+    overflow: hidden;
+  }
+  .arg-card .strength-bar {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; border-radius: 0 2px 2px 0;
+  }
+  .arg-card .arg-text { padding-left: 8px; }
+  .arg-card .arg-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 8px; padding-left: 8px; font-size: 10px; color: var(--gray);
+  }
+  .arg-card .score { font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+
+  /* Consensus box */
+  .consensus-box {
+    background: linear-gradient(135deg, rgba(13,148,136,0.1), rgba(34,197,94,0.1));
+    border: 1px solid rgba(13,148,136,0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 16px;
+  }
+  .consensus-box h3 { font-size: 14px; font-weight: 700; color: var(--teal-light); margin-bottom: 8px; }
+  .consensus-box p { font-size: 13px; color: var(--gray-light); line-height: 1.7; }
+  .consensus-box .confidence {
+    display: flex; align-items: center; gap: 8px; margin-top: 12px;
+  }
+  .confidence-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+  .confidence-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .confidence-label { font-size: 11px; font-weight: 700; }
+
+  /* Progress bar at bottom */
+  .progress-strip {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 48px; background: rgba(15,27,45,0.95);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; padding: 0 32px; gap: 16px;
+    backdrop-filter: blur(8px);
+  }
+  .progress-phases { display: flex; gap: 2px; flex: 1; }
+  .progress-phase {
+    height: 4px; border-radius: 2px; flex: 1;
+    background: rgba(255,255,255,0.06);
+    transition: background 0.5s;
+  }
+  .progress-phase.complete { background: var(--teal); }
+  .progress-phase.current { background: var(--gold); animation: pulse 1.5s ease infinite; }
+  .progress-label { font-size: 11px; color: var(--gray); white-space: nowrap; }
+  .progress-action {
+    padding: 8px 20px; border-radius: 6px;
+    background: var(--teal); color: white; border: none;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; font-family: 'Inter', sans-serif;
+  }
+  .progress-action:hover { background: var(--teal-light); }
+  .progress-action:disabled { opacity: 0.4; cursor: default; }
+
+  /* Animations */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.4s ease forwards; }
+  @keyframes drawLine { from { stroke-dashoffset: 200; } to { stroke-dashoffset: 0; } }
+  .draw-line { stroke-dasharray: 200; animation: drawLine 1s ease forwards; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo"><span>WAY</span>MAKER</div>
+  <div class="room-info">
+    <div>
+      <div class="room-title">Q3 Roadmap Priority: AI Features vs. Core Performance</div>
+      <div class="room-meta">Decision Room &bull; 4 participants &bull; Created 2h ago</div>
+    </div>
+  </div>
+  <div class="phase-indicator analyzing" id="phaseIndicator">
+    <div class="phase-dot"></div>
+    <span id="phaseText">Analyzing</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT: PARTICIPANT INPUTS -->
+  <div class="panel-left">
+    <div class="panel-title">Positions (4)</div>
+
+    <div class="input-card active" onclick="selectInput(0)" id="input-0">
+      <div style="display:flex;align-items:center;">
+        <div class="avatar" style="background:#3B82F6;">SP</div>
+        <div><div class="name">Sarah P.</div><div class="role">Head of Product</div></div>
+      </div>
+      <div class="position">We should go all-in on AI features. Our competitors shipped AI search last quarter and we're losing enterprise deals because of it. The TAM for AI features is 3x our current addressable market.</div>
+      <span class="stance for">FOR AI FEATURES</span>
+    </div>
+
+    <div class="input-card" onclick="selectInput(1)" id="input-1">
+      <div style="display:flex;align-items:center;">
+        <div class="avatar" style="background:#EF4444;">MK</div>
+        <div><div class="name">Marcus K.</div><div class="role">VP Engineering</div></div>
+      </div>
+      <div class="position">Core performance has to come first. Our P95 latency is 3.2s &mdash; double our SLA. We can't layer AI on a foundation that's cracking. Engineering debt is costing us 30% of sprint capacity.</div>
+      <span class="stance against">FOR CORE PERF</span>
+    </div>
+
+    <div class="input-card" onclick="selectInput(2)" id="input-2">
+      <div style="display:flex;align-items:center;">
+        <div class="avatar" style="background:#F59E0B;">LT</div>
+        <div><div class="name">Lisa T.</div><div class="role">Design Lead</div></div>
+      </div>
+      <div class="position">Our users don't care if it's AI or not &mdash; they care about UX. I'd do a lightweight AI assist (autocomplete, smart filters) that improves the existing experience rather than a separate "AI features" launch.</div>
+      <span class="stance conditional">CONDITIONAL</span>
+    </div>
+
+    <div class="input-card" onclick="selectInput(3)" id="input-3">
+      <div style="display:flex;align-items:center;">
+        <div class="avatar" style="background:#8B5CF6;">JR</div>
+        <div><div class="name">James R.</div><div class="role">CTO</div></div>
+      </div>
+      <div class="position">We can parallelize. Dedicate 60% to a performance sprint (infra team), 40% to lightweight AI features that don't require heavy infra. Ship performance fixes in 4 weeks, AI beta in 8.</div>
+      <span class="stance conditional">PARALLEL PATH</span>
+    </div>
+
+    <div class="panel-title" style="margin-top:24px;">Source Research</div>
+    <div class="input-card" style="border-left:3px solid var(--teal);cursor:default;">
+      <div class="name" style="font-size:12px;">&#128270; Waymaker Research</div>
+      <div class="position" style="margin-top:6px;font-size:11px;">Analyzed 12 competitor launches, 3 analyst reports, and internal performance data. Key finding: 78% of enterprise deals lost in Q2 cited "missing AI capabilities" but 45% of churned accounts cited "reliability issues."</div>
+    </div>
+  </div>
+
+  <!-- CENTER: VISUAL ARENA -->
+  <div class="arena" id="arena">
+    <svg class="arena-svg" id="arenaSvg" viewBox="0 0 600 600">
+      <!-- Background grid -->
+      <defs>
+        <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+          <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="1"/>
+        </pattern>
+        <radialGradient id="centerGlow">
+          <stop offset="0%" style="stop-color:#14B8A6;stop-opacity:0.15"/>
+          <stop offset="100%" style="stop-color:#14B8A6;stop-opacity:0"/>
+        </radialGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <rect width="600" height="600" fill="url(#grid)"/>
+
+      <!-- Connection edges (drawn dynamically) -->
+      <g id="edges"></g>
+
+      <!-- Center consensus node -->
+      <circle cx="300" cy="300" r="80" fill="url(#centerGlow)" class="consensus-node"/>
+      <circle cx="300" cy="300" r="42" fill="none" stroke="rgba(20,184,166,0.3)" stroke-width="1" stroke-dasharray="4 4" class="consensus-node">
+        <animateTransform attributeName="transform" type="rotate" from="0 300 300" to="360 300 300" dur="30s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="300" cy="300" r="32" fill="var(--navy2)" stroke="var(--teal)" stroke-width="2" class="consensus-node" filter="url(#glow)"/>
+      <text x="300" y="296" text-anchor="middle" fill="var(--teal-light)" font-family="Inter" font-size="10" font-weight="700" letter-spacing="1">WAY</text>
+      <text x="300" y="310" text-anchor="middle" fill="white" font-family="Inter" font-size="8" font-weight="500">MAKER</text>
+
+      <!-- Participant nodes -->
+      <g class="node-group" id="node-0" onclick="selectInput(0)">
+        <line x1="300" y1="300" x2="180" y2="140" class="edge-agree draw-line" stroke-dasharray="200"/>
+        <circle cx="180" cy="140" r="28" fill="var(--navy2)" stroke="#3B82F6" stroke-width="2"/>
+        <text x="180" y="137" text-anchor="middle" class="node-label" font-size="11">SP</text>
+        <text x="180" y="150" text-anchor="middle" class="node-sublabel" font-size="8">Product</text>
+        <!-- Strength indicator -->
+        <circle cx="205" cy="118" r="12" fill="rgba(59,130,246,0.2)" stroke="none"/>
+        <text x="205" y="122" text-anchor="middle" fill="#3B82F6" font-family="Inter" font-size="9" font-weight="700">8.2</text>
+      </g>
+
+      <g class="node-group" id="node-1" onclick="selectInput(1)">
+        <line x1="300" y1="300" x2="440" y2="150" class="edge-conflict draw-line" stroke-dasharray="200"/>
+        <circle cx="440" cy="150" r="28" fill="var(--navy2)" stroke="#EF4444" stroke-width="2"/>
+        <text x="440" y="147" text-anchor="middle" class="node-label" font-size="11">MK</text>
+        <text x="440" y="160" text-anchor="middle" class="node-sublabel" font-size="8">Eng VP</text>
+        <circle cx="465" cy="128" r="12" fill="rgba(239,68,68,0.2)" stroke="none"/>
+        <text x="465" y="132" text-anchor="middle" fill="#EF4444" font-family="Inter" font-size="9" font-weight="700">7.8</text>
+      </g>
+
+      <g class="node-group" id="node-2" onclick="selectInput(2)">
+        <line x1="300" y1="300" x2="150" y2="420" class="edge-partial draw-line" stroke-dasharray="200"/>
+        <circle cx="150" cy="420" r="28" fill="var(--navy2)" stroke="#F59E0B" stroke-width="2"/>
+        <text x="150" y="417" text-anchor="middle" class="node-label" font-size="11">LT</text>
+        <text x="150" y="430" text-anchor="middle" class="node-sublabel" font-size="8">Design</text>
+        <circle cx="175" cy="398" r="12" fill="rgba(245,158,11,0.2)" stroke="none"/>
+        <text x="175" y="402" text-anchor="middle" fill="#F59E0B" font-family="Inter" font-size="9" font-weight="700">7.1</text>
+      </g>
+
+      <g class="node-group" id="node-3" onclick="selectInput(3)">
+        <line x1="300" y1="300" x2="460" y2="430" class="edge-agree draw-line" stroke-dasharray="200"/>
+        <circle cx="460" cy="430" r="28" fill="var(--navy2)" stroke="#8B5CF6" stroke-width="2"/>
+        <text x="460" y="427" text-anchor="middle" class="node-label" font-size="11">JR</text>
+        <text x="460" y="440" text-anchor="middle" class="node-sublabel" font-size="8">CTO</text>
+        <circle cx="485" cy="408" r="12" fill="rgba(139,92,246,0.2)" stroke="none"/>
+        <text x="485" y="412" text-anchor="middle" fill="#8B5CF6" font-family="Inter" font-size="9" font-weight="700">8.9</text>
+      </g>
+
+      <!-- Cross-participant edges -->
+      <g id="crossEdges">
+        <!-- Sarah <-> Marcus: CONFLICT -->
+        <line x1="180" y1="140" x2="440" y2="150" class="edge-conflict" stroke-dasharray="6 4" opacity="0.4"/>
+        <text x="310" y="128" text-anchor="middle" fill="var(--red)" font-family="Inter" font-size="8" font-weight="600" opacity="0.7">CONFLICT</text>
+
+        <!-- Sarah <-> Lisa: PARTIAL -->
+        <line x1="180" y1="140" x2="150" y2="420" class="edge-partial" opacity="0.3"/>
+        <text x="142" y="280" text-anchor="middle" fill="var(--gold)" font-family="Inter" font-size="8" font-weight="600" opacity="0.7" transform="rotate(-75 142 280)">PARTIAL</text>
+
+        <!-- James <-> Lisa: AGREE -->
+        <line x1="460" y1="430" x2="150" y2="420" class="edge-agree" opacity="0.4"/>
+        <text x="305" y="445" text-anchor="middle" fill="var(--green)" font-family="Inter" font-size="8" font-weight="600" opacity="0.7">ALIGNED</text>
+
+        <!-- James <-> Marcus: PARTIAL -->
+        <line x1="460" y1="430" x2="440" y2="150" class="edge-partial" opacity="0.3"/>
+      </g>
+
+      <!-- Argument strength labels -->
+      <text x="230" y="210" fill="rgba(255,255,255,0.3)" font-family="Inter" font-size="7" transform="rotate(-32 230 210)">TAM expansion +3x</text>
+      <text x="380" y="215" fill="rgba(255,255,255,0.3)" font-family="Inter" font-size="7" transform="rotate(28 380 215)">P95 latency risk</text>
+      <text x="210" y="370" fill="rgba(255,255,255,0.3)" font-family="Inter" font-size="7" transform="rotate(60 210 370)">UX-first approach</text>
+      <text x="390" y="380" fill="rgba(255,255,255,0.3)" font-family="Inter" font-size="7" transform="rotate(-40 390 380)">Parallel execution</text>
+    </svg>
+  </div>
+
+  <!-- RIGHT: ANALYSIS -->
+  <div class="panel-right">
+    <div class="panel-title">Waymaker Analysis</div>
+
+    <!-- Phase tracker -->
+    <div class="phase-timeline">
+      <div class="phase-step done">
+        <div class="dot">&#10003;</div>
+        <div class="info"><h4>Inputs Collected</h4><p>4 positions received</p></div>
+      </div>
+      <div class="phase-step done">
+        <div class="dot">&#10003;</div>
+        <div class="info"><h4>Research Complete</h4><p>12 sources analyzed</p></div>
+      </div>
+      <div class="phase-step active">
+        <div class="dot">3</div>
+        <div class="info"><h4>Scoring Arguments</h4><p>Weighing against criteria...</p></div>
+      </div>
+      <div class="phase-step future">
+        <div class="dot">4</div>
+        <div class="info"><h4>Generating Recommendation</h4><p>Pending</p></div>
+      </div>
+    </div>
+
+    <!-- Consensus Points -->
+    <div class="arg-section">
+      <div class="arg-section-title" style="color:var(--green);">&#9679; Consensus Points</div>
+      <div class="arg-card fade-in">
+        <div class="strength-bar" style="background:var(--green);"></div>
+        <div class="arg-text">All 4 participants agree AI capabilities are necessary for competitive positioning</div>
+        <div class="arg-meta">
+          <span>SP, MK, LT, JR</span>
+          <span class="score" style="background:rgba(34,197,94,0.15);color:var(--green);">4/4 agree</span>
+        </div>
+      </div>
+      <div class="arg-card fade-in" style="animation-delay:0.1s;">
+        <div class="strength-bar" style="background:var(--green);"></div>
+        <div class="arg-text">Performance debt is real and measurable (3.2s P95 vs 1.5s SLA)</div>
+        <div class="arg-meta">
+          <span>MK, JR, LT</span>
+          <span class="score" style="background:rgba(34,197,94,0.15);color:var(--green);">3/4 agree</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conflicts -->
+    <div class="arg-section">
+      <div class="arg-section-title" style="color:var(--red);">&#9679; Key Conflicts</div>
+      <div class="arg-card fade-in" style="animation-delay:0.2s;">
+        <div class="strength-bar" style="background:var(--red);"></div>
+        <div class="arg-text"><strong>SP vs MK:</strong> Prioritize market opportunity (AI) vs. fix reliability first (perf)</div>
+        <div class="arg-meta">
+          <span>Core tension</span>
+          <span class="score" style="background:rgba(239,68,68,0.15);color:var(--red);">High impact</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ranked Arguments -->
+    <div class="arg-section">
+      <div class="arg-section-title" style="color:var(--gold);">&#9679; Argument Ranking</div>
+      <div class="arg-card fade-in" style="animation-delay:0.3s;">
+        <div class="strength-bar" style="background:var(--purple);"></div>
+        <div class="arg-text"><strong>#1 JR:</strong> Parallel path is feasible &mdash; infra team can run perf sprint while product team scopes lightweight AI</div>
+        <div class="arg-meta">
+          <span>Backed by: capacity data</span>
+          <span class="score" style="background:rgba(139,92,246,0.15);color:var(--purple);">8.9/10</span>
+        </div>
+      </div>
+      <div class="arg-card fade-in" style="animation-delay:0.4s;">
+        <div class="strength-bar" style="background:var(--blue);"></div>
+        <div class="arg-text"><strong>#2 SP:</strong> Lost deals data is compelling &mdash; 78% cite missing AI as reason</div>
+        <div class="arg-meta">
+          <span>Backed by: CRM data</span>
+          <span class="score" style="background:rgba(59,130,246,0.15);color:var(--blue);">8.2/10</span>
+        </div>
+      </div>
+      <div class="arg-card fade-in" style="animation-delay:0.5s;">
+        <div class="strength-bar" style="background:var(--red);"></div>
+        <div class="arg-text"><strong>#3 MK:</strong> SLA breach is a churn risk &mdash; 45% of churned accounts cited reliability</div>
+        <div class="arg-meta">
+          <span>Backed by: churn analysis</span>
+          <span class="score" style="background:rgba(239,68,68,0.15);color:var(--red);">7.8/10</span>
+        </div>
+      </div>
+      <div class="arg-card fade-in" style="animation-delay:0.6s;">
+        <div class="strength-bar" style="background:var(--gold);"></div>
+        <div class="arg-text"><strong>#4 LT:</strong> Lightweight AI-in-UX approach reduces scope risk</div>
+        <div class="arg-meta">
+          <span>Backed by: user research</span>
+          <span class="score" style="background:rgba(245,158,11,0.15);color:var(--gold);">7.1/10</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSENSUS RECOMMENDATION -->
+    <div class="consensus-box">
+      <h3>&#9889; Waymaker Recommendation</h3>
+      <p><strong>Adopt James's parallel path with Lisa's UX-first constraint.</strong> Run a 4-week performance sprint (infra team) to bring P95 under SLA, while the product team scopes lightweight AI features embedded in existing UX (not a standalone launch). Target AI beta in 8 weeks. This resolves Marcus's reliability concern, captures Sarah's market opportunity, and follows Lisa's principle of improving the existing experience.</p>
+      <div class="confidence">
+        <span style="font-size:11px;color:var(--gray);">Confidence</span>
+        <div class="confidence-bar">
+          <div class="confidence-fill" style="width:82%;background:linear-gradient(90deg,var(--teal),var(--green));"></div>
+        </div>
+        <span class="confidence-label" style="color:var(--green);">82%</span>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--gray);">
+        Based on: 4 participant inputs, 12 research sources, weighted by criteria: Risk (40%), Speed (30%), Market Impact (30%)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM PROGRESS -->
+<div class="progress-strip">
+  <div class="progress-label">Round 1 of 3</div>
+  <div class="progress-phases">
+    <div class="progress-phase complete"></div>
+    <div class="progress-phase complete"></div>
+    <div class="progress-phase current"></div>
+    <div class="progress-phase"></div>
+  </div>
+  <div class="progress-label" style="color:var(--teal-light);">82% confidence</div>
+  <button class="progress-action" onclick="advancePhase()">Accept & Log Decision</button>
+</div>
+
+<script>
+function selectInput(idx) {
+  document.querySelectorAll('.input-card').forEach((c, i) => {
+    c.classList.toggle('active', i === idx);
+  });
+  // Highlight corresponding node
+  document.querySelectorAll('.node-group circle').forEach(c => {
+    c.style.filter = '';
+  });
+  const node = document.getElementById('node-' + idx);
+  if (node) {
+    node.querySelector('circle').style.filter = 'url(#glow)';
+  }
+}
+
+function advancePhase() {
+  const btn = document.querySelector('.progress-action');
+  const indicator = document.getElementById('phaseIndicator');
+  const phaseText = document.getElementById('phaseText');
+
+  btn.textContent = '&#10003; Decision Logged';
+  btn.disabled = true;
+  btn.style.background = '#22C55E';
+
+  indicator.className = 'phase-indicator decided';
+  phaseText.textContent = 'Decided';
+
+  document.querySelectorAll('.progress-phase').forEach(p => {
+    p.classList.remove('current');
+    p.classList.add('complete');
+  });
+
+  // Update phase timeline
+  document.querySelectorAll('.phase-step').forEach(s => {
+    s.classList.remove('active', 'future');
+    s.classList.add('done');
+    const dot = s.querySelector('.dot');
+    dot.innerHTML = '&#10003;';
+  });
+}
+</script>
+</body>
+</html>

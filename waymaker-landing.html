@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waymaker — The AI Arbitrator for Team Decisions</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --navy: #0F1B2D;
+    --teal: #0D9488;
+    --teal-light: #14B8A6;
+    --gold: #F59E0B;
+    --white: #FFFFFF;
+    --off-white: #F8FAFC;
+    --gray: #94A3B8;
+    --gray-light: #E2E8F0;
+    --dark: #1E293B;
+    --mid: #475569;
+  }
+
+  body { font-family: 'Inter', -apple-system, sans-serif; color: var(--dark); line-height: 1.6; }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, var(--navy) 0%, #1a2940 100%);
+    padding: 80px 20px 100px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(13,148,136,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(245,158,11,0.06) 0%, transparent 50%);
+    animation: float 20s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-2%, 2%); }
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+  .hero-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border: 1px solid rgba(20,184,166,0.3);
+    border-radius: 999px;
+    color: var(--teal-light);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 32px;
+    letter-spacing: 0.5px;
+  }
+  .hero h1 {
+    font-size: clamp(40px, 6vw, 72px);
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 24px;
+  }
+  .hero h1 span { color: var(--teal-light); }
+  .hero p {
+    font-size: 18px;
+    color: var(--gray);
+    max-width: 560px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+  }
+  .cta-group { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 14px 32px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-primary { background: var(--teal); color: white; }
+  .btn-primary:hover { background: var(--teal-light); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(13,148,136,0.3); }
+  .btn-secondary { background: transparent; color: var(--gray); border: 1px solid rgba(148,163,184,0.3); }
+  .btn-secondary:hover { color: white; border-color: rgba(255,255,255,0.3); }
+
+  /* PROBLEM SECTION */
+  .problem { padding: 100px 20px; background: var(--off-white); }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .section-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--teal);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+  .section-desc {
+    font-size: 17px;
+    color: var(--mid);
+    max-width: 600px;
+    margin-bottom: 48px;
+    line-height: 1.7;
+  }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+  .stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid var(--gray-light);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
+  .stat-number { font-size: 48px; font-weight: 800; color: var(--teal); line-height: 1; margin-bottom: 8px; }
+  .stat-label { font-size: 15px; color: var(--mid); line-height: 1.5; }
+  .stat-source { font-size: 12px; color: var(--gray); margin-top: 12px; }
+
+  /* HOW IT WORKS */
+  .how { padding: 100px 20px; background: white; }
+  .modes-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--off-white);
+    border-radius: 10px;
+    padding: 4px;
+    max-width: 400px;
+    margin-bottom: 48px;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    color: var(--mid);
+  }
+  .mode-btn.active { background: white; color: var(--teal); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .mode-content { display: none; }
+  .mode-content.active { display: block; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px; }
+  .step { position: relative; }
+  .step-num {
+    width: 40px; height: 40px;
+    background: var(--teal);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  .step h3 { font-size: 18px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
+  .step p { font-size: 14px; color: var(--mid); line-height: 1.6; }
+
+  /* FEATURES */
+  .features { padding: 100px 20px; background: var(--navy); }
+  .features .section-label { color: var(--gold); }
+  .features .section-title { color: white; }
+  .features .section-desc { color: var(--gray); }
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+  .feature-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 28px;
+    transition: background 0.2s;
+  }
+  .feature-card:hover { background: rgba(255,255,255,0.08); }
+  .feature-icon {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+  .feature-card h3 { font-size: 17px; font-weight: 600; color: white; margin-bottom: 8px; }
+  .feature-card p { font-size: 14px; color: var(--gray); line-height: 1.6; }
+
+  /* COMPARISON */
+  .comparison { padding: 100px 20px; background: var(--off-white); }
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .comp-table th {
+    background: var(--navy);
+    color: white;
+    padding: 14px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .comp-table th:first-child { text-align: left; }
+  .comp-table td {
+    padding: 12px 16px;
+    font-size: 14px;
+    text-align: center;
+    border-bottom: 1px solid var(--gray-light);
+  }
+  .comp-table td:first-child { text-align: left; font-weight: 500; }
+  .comp-table tr:last-child { background: rgba(13,148,136,0.05); font-weight: 600; }
+  .comp-table tr:last-child td { color: var(--teal); border-bottom: none; }
+  .yes { color: #16A34A; font-weight: 600; }
+  .no { color: #DC2626; }
+  .partial { color: #CA8A04; }
+
+  /* CTA */
+  .cta-section { padding: 100px 20px; background: white; text-align: center; }
+  .cta-section h2 {
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 16px;
+  }
+  .cta-section h2 span { color: var(--teal); }
+  .cta-section p { font-size: 18px; color: var(--mid); margin-bottom: 40px; max-width: 500px; margin-left: auto; margin-right: auto; }
+
+  /* FOOTER */
+  footer {
+    background: var(--navy);
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--gray);
+    font-size: 14px;
+  }
+  footer a { color: var(--teal-light); text-decoration: none; }
+
+  @media (max-width: 768px) {
+    .hero { padding: 60px 20px 80px; }
+    .stats-grid, .steps, .feature-grid { grid-template-columns: 1fr; }
+    .comp-table { font-size: 12px; }
+    .comp-table th, .comp-table td { padding: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">Coming Q2 2026</div>
+    <h1>AI gave you infinite ideas.<br><span>Now you need a decision.</span></h1>
+    <p>Waymaker is the AI arbitrator that turns your team's competing ideas into clear decisions and real execution. In meetings and async.</p>
+    <div class="cta-group">
+      <a href="#" class="btn btn-primary">Join the Waitlist</a>
+      <a href="#how" class="btn btn-secondary">See How It Works &darr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="problem">
+  <div class="container">
+    <div class="section-label">The Problem</div>
+    <div class="section-title">AI multiplied your ideas.<br>It didn't help you pick one.</div>
+    <div class="section-desc">Every person on your team now generates more ideas, faster, with AI. But more ideas without a decision engine means paralysis, not progress.</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">53%</div>
+        <div class="stat-label">of recipients feel annoyed by AI-generated workplace communications</div>
+        <div class="stat-source">CNBC, 2025</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">73%</div>
+        <div class="stat-label">of managers say AI creates more work, not less &mdash; a phenomenon called "AI brain fry"</div>
+        <div class="stat-source">BCG / Fortune, March 2026</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">2.5x</div>
+        <div class="stat-label">more content generated per knowledge worker since ChatGPT launched</div>
+        <div class="stat-source">McKinsey, 2025</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="container">
+    <div class="section-label">How It Works</div>
+    <div class="section-title">Two modes. One outcome: decisions.</div>
+    <div class="section-desc">Whether your team debates async or on live calls, Waymaker finds the way forward.</div>
+    <div class="modes-toggle">
+      <button class="mode-btn active" onclick="switchMode('async')">Async Rooms</button>
+      <button class="mode-btn" onclick="switchMode('live')">Live Meetings</button>
+    </div>
+    <div class="mode-content active" id="mode-async">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Create a Room</h3>
+          <p>Name the decision. Invite 2&ndash;10 participants. Set your criteria: speed, risk, cost, or innovation.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Everyone Contributes</h3>
+          <p>Paste AI-generated arguments, type directly, or connect Slack and email threads. Every input is tagged.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>AI Arbitrates</h3>
+          <p>Waymaker maps all positions, identifies consensus and conflict, and scores argument strength with full transparency.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3>Decide & Ship</h3>
+          <p>Lock in the decision. Tasks auto-create in Slack, Notion, or Monday. The decision is logged forever.</p>
+        </div>
+      </div>
+    </div>
+    <div class="mode-content" id="mode-live">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Invite Waymaker</h3>
+          <p>Add Waymaker to your Zoom or Google Meet call. It joins as a silent participant and starts transcribing.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Live Synthesis</h3>
+          <p>As the discussion progresses, Waymaker surfaces suggestions in a sidebar &mdash; like having a senior manager in the room.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Break Deadlocks</h3>
+          <p>When there's no consensus, Waymaker intervenes with a structured recommendation based on everything said.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3>Auto-Action</h3>
+          <p>Decisions become tasks in Slack, Notion, Monday, or Jira. A summary posts to your channel. Done.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="container">
+    <div class="section-label">Why Waymaker</div>
+    <div class="section-title">AI gave you the ideas. Waymaker makes the call.</div>
+    <div class="section-desc">Not another idea generator. A decision engine.</div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(13,148,136,0.15);">&#128269;</div>
+        <h3>Source Transparency</h3>
+        <p>Every recommendation traces back to who said what. Full attribution builds trust across the team.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(245,158,11,0.15);">&#128200;</div>
+        <h3>Time Savings Dashboard</h3>
+        <p>See exactly how many hours Waymaker saved your team. A stat your executives will love.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(139,92,246,0.15);">&#128218;</div>
+        <h3>Decision Log</h3>
+        <p>Searchable database of every decision made. Institutional memory that never forgets.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(236,72,153,0.15);">&#128231;</div>
+        <h3>Weekly Digest</h3>
+        <p>Automated end-of-week report: key decisions made, who was involved, time saved, open items.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(34,197,94,0.15);">&#9881;</div>
+        <h3>Configurable Judge</h3>
+        <p>Tune the AI's criteria. Optimize for speed, risk reduction, innovation, or cost. Your values, your weights.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(59,130,246,0.15);">&#128279;</div>
+        <h3>Deep Integrations</h3>
+        <p>Slack, Notion, Monday, Jira, Google Docs, email. Decisions flow into the tools you already use.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section class="comparison">
+  <div class="container">
+    <div class="section-label">Competitive Landscape</div>
+    <div class="section-title">Every tool helps generate ideas. None help you pick one.</div>
+    <div class="section-desc">Until now.</div>
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th>Tool</th>
+          <th>Async?</th>
+          <th>Multi-Party?</th>
+          <th>Arbitrates?</th>
+          <th>Live Mode?</th>
+          <th>Task Creation?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Otter / Fireflies / Fathom</td><td class="no">&#10007;</td><td class="yes">&#10003;</td><td class="no">&#10007;</td><td class="yes">&#10003;</td><td class="no">&#10007;</td></tr>
+        <tr><td>Microsoft Teams Facilitator</td><td class="no">&#10007;</td><td class="yes">&#10003;</td><td class="no">&#10007;</td><td class="yes">&#10003;</td><td class="partial">Partial</td></tr>
+        <tr><td>Pol.is / Loomio</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="partial">Partial</td><td class="no">&#10007;</td><td class="no">&#10007;</td></tr>
+        <tr><td>AAA-ICDR (Legal AI)</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="no">&#10007;</td><td class="no">&#10007;</td></tr>
+        <tr><td>Waymaker</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td><td class="yes">&#10003;</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2>AI gave you the ideas.<br><span>Now make the call.</span></h2>
+  <p>Join the waitlist. Be first to turn your team's ideas into decisions.</p>
+  <a href="#" class="btn btn-primary" style="font-size:18px; padding:16px 40px;">Join the Waitlist</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p><strong style="color:white;">Waymaker</strong> &mdash; AI gave you ideas. We make the call.</p>
+  <p style="margin-top:8px;">getwaymaker.com &bull; <a href="mailto:rajdua07@gmail.com">rajdua07@gmail.com</a></p>
+  <p style="margin-top:16px; font-size:12px; color:#64748B;">&copy; 2026 Waymaker. All rights reserved.</p>
+</footer>
+
+<script>
+function switchMode(mode) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('mode-' + mode).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
