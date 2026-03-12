@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { AuthProvider } from "./auth-provider";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +19,14 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="flex h-screen bg-navy">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-auto">{children}</main>
+    <AuthProvider>
+      <div className="flex h-screen bg-navy">
+        <Sidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header />
+          <main className="flex-1 overflow-auto">{children}</main>
+        </div>
       </div>
-    </div>
+    </AuthProvider>
   );
 }
