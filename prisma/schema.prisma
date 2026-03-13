@@ -90,7 +90,7 @@ model DecisionRoom {
   id           String   @id @default(cuid())
   title        String
   description  String?
-  teamId       String?
+  teamId       String
   creatorId    String
   decisionType String   @default("custom")
   criteria     String   @default("[]")
@@ -99,7 +99,7 @@ model DecisionRoom {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  team         Team?            @relation(fields: [teamId], references: [id])
+  team         Team             @relation(fields: [teamId], references: [id])
   creator      User             @relation("RoomCreator", fields: [creatorId], references: [id])
   participants RoomParticipant[]
   positions    Position[]
@@ -138,8 +138,21 @@ model Position {
   content     String
   createdAt   DateTime @default(now())
 
-  room DecisionRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room        DecisionRoom       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attachments PositionAttachment[]
+}
+
+model PositionAttachment {
+  id          String   @id @default(cuid())
+  positionId  String
+  url         String
+  filename    String
+  contentType String
+  size        Int
+  createdAt   DateTime @default(now())
+
+  position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
 }
 
 model Synthesis {

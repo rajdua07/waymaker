@@ -4,6 +4,37 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { inviteMemberSchema } from "@/lib/validators";
 
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ teamId: string }> }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { teamId } = await params;
+
+  // Verify user is a member of this team
+  const membership = await prisma.teamMember.findUnique({
+    where: { teamId_userId: { teamId, userId: session.user.id } },
+  });
+
+  if (!membership) {
+    return NextResponse.json({ error: "Not a team member" }, { status: 403 });
+  }
+
+  const members = await prisma.teamMember.findMany({
+    where: { teamId },
+    include: {
+      user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+    },
+    orderBy: { joinedAt: "asc" },
+  });
+
+  return NextResponse.json(members);
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }

@@ -34,7 +34,7 @@ export async function runSynthesis(roomId: string): Promise<SynthesisResult> {
   // Re-fetch positions for current round
   const positions = await prisma.position.findMany({
     where: { roomId, roundNumber: room.currentRound },
-    include: { user: { select: { id: true, name: true } } },
+    include: { user: { select: { id: true, name: true } }, attachments: true },
   });
 
   if (positions.length < 2) {
@@ -72,6 +72,8 @@ export async function runSynthesis(roomId: string): Promise<SynthesisResult> {
       userId: p.userId,
       userName: p.user.name || "Anonymous",
       content: p.content,
+      attachmentCount: p.attachments.length,
+      attachmentNames: p.attachments.map((a) => a.filename),
     })),
     roundNumber: room.currentRound,
     previousSynthesis,

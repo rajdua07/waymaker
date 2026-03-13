@@ -24,6 +24,7 @@ export async function GET(
     },
     include: {
       user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      attachments: true,
     },
     orderBy: { createdAt: "asc" },
   });
@@ -87,9 +88,22 @@ export async function POST(
       userId: targetUserId,
       roundNumber: room.currentRound,
       content: parsed.data.content,
+      ...(parsed.data.attachments && parsed.data.attachments.length > 0
+        ? {
+            attachments: {
+              create: parsed.data.attachments.map((a) => ({
+                url: a.url,
+                filename: a.filename,
+                contentType: a.contentType,
+                size: a.size,
+              })),
+            },
+          }
+        : {}),
     },
     include: {
       user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      attachments: true,
     },
   });
 

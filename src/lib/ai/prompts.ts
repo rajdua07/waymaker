@@ -6,7 +6,7 @@ export function buildSynthesisPrompt(params: {
   description: string;
   decisionType: DecisionType;
   criteria: CriterionDef[];
-  positions: Array<{ userId: string; userName: string; content: string }>;
+  positions: Array<{ userId: string; userName: string; content: string; attachmentCount?: number; attachmentNames?: string[] }>;
   roundNumber: number;
   previousSynthesis?: SynthesisResult;
   contextDocuments?: Array<{ title: string; content: string }>;
@@ -55,7 +55,13 @@ export function buildSynthesisPrompt(params: {
     .join("\n");
 
   const positionsStr = params.positions
-    .map((p) => `[${p.userName}] (id: ${p.userId}): ${p.content}`)
+    .map((p) => {
+      let entry = `[${p.userName}] (id: ${p.userId}): ${p.content}`;
+      if (p.attachmentCount && p.attachmentCount > 0 && p.attachmentNames) {
+        entry += `\n[This participant attached ${p.attachmentCount} file(s): ${p.attachmentNames.join(", ")}]`;
+      }
+      return entry;
+    })
     .join("\n\n");
 
   let previousContext = "";

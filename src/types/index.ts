@@ -22,13 +22,23 @@ export interface UserBasic {
   avatarUrl: string | null;
 }
 
+// --- Attachment ---
+
+export interface PositionAttachment {
+  id: string;
+  url: string;
+  filename: string;
+  contentType: string;
+  size: number;
+}
+
 // --- Room ---
 
 export interface RoomWithDetails {
   id: string;
   title: string;
   description: string | null;
-  teamId: string | null;
+  teamId: string;
   creatorId: string;
   decisionType: DecisionType;
   criteria: CriterionDef[];
@@ -66,6 +76,7 @@ export interface PositionWithUser {
   content: string;
   createdAt: string;
   user: UserBasic;
+  attachments: PositionAttachment[];
 }
 
 // --- Synthesis ---

@@ -9,8 +9,8 @@ const criterionSchema = z.object({
 export const createRoomSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(2000).optional(),
-  teamId: z.string().optional(),
-  participantEmails: z.array(z.email()).min(1).max(10),
+  teamId: z.string(),
+  participantUserIds: z.array(z.string()).min(1).max(10),
   decisionType: z.enum([
     "prioritization",
     "go-no-go",
@@ -21,9 +21,17 @@ export const createRoomSchema = z.object({
   criteria: z.array(criterionSchema).min(1).max(5),
 });
 
+const attachmentSchema = z.object({
+  url: z.string().url(),
+  filename: z.string().min(1).max(255),
+  contentType: z.string().min(1),
+  size: z.number().int().positive(),
+});
+
 export const submitPositionSchema = z.object({
   content: z.string().min(1).max(10000),
   onBehalfOfUserId: z.string().optional(),
+  attachments: z.array(attachmentSchema).max(5).optional(),
 });
 
 export const addDocumentSchema = z.object({

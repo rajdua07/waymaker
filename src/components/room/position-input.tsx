@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import type { SynthesisData } from "@/types";
+import type { SynthesisData, PositionAttachment } from "@/types";
 
 interface Participant {
   userId: string;
   user: { id: string; name: string | null; email: string };
+}
+
+interface UploadedFile {
+  url: string;
+  filename: string;
+  contentType: string;
+  size: number;
 }
 
 interface PositionInputProps {
@@ -33,14 +40,60 @@ export function PositionInput({
   const [loading, setLoading] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [showPrevContext, setShowPrevContext] = useState(true);
+  const [attachments, setAttachments] = useState<UploadedFile[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    for (const file of Array.from(files)) {
+      if (attachments.length >= 5) break;
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (res.ok) {
+          const uploaded: UploadedFile = await res.json();
+          setAttachments((prev) => [...prev, uploaded]);
+        }
+      } catch {
+        // silently skip failed uploads
+      }
+    }
+    setUploading(false);
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function removeAttachment(url: string) {
+    setAttachments((prev) => prev.filter((a) => a.url !== url));
+  }
+
+  function isImage(contentType: string) {
+    return contentType.startsWith("image/");
+  }
 
   async function handleSubmit() {
     if (!content.trim()) return;
     setLoading(true);
 
-    const body: Record<string, string> = { content: content.trim() };
+    const body: Record<string, unknown> = { content: content.trim() };
     if (isCreator && selectedUserId && selectedUserId !== currentUserId) {
       body.onBehalfOfUserId = selectedUserId;
+    }
+    if (attachments.length > 0) {
+      body.attachments = attachments;
     }
 
     const res = await fetch(`/api/rooms/${roomId}/positions`, {
@@ -53,6 +106,7 @@ export function PositionInput({
 
     if (res.ok) {
       setContent("");
+      setAttachments([]);
       onSubmitted();
     }
   }
@@ -81,7 +135,7 @@ export function PositionInput({
                   Round {currentRound} — Refine your position
                 </p>
                 <span className="text-[10px] text-slate-gray">
-                  {showPrevContext ? "▲" : "▼"}
+                  {showPrevContext ? "\u25B2" : "\u25BC"}
                 </span>
               </div>
               {showPrevContext && (
@@ -133,20 +187,90 @@ export function PositionInput({
           rows={3}
           className="bg-navy border-white/10 text-white text-xs placeholder:text-slate-gray resize-none mb-2"
         />
-        <Button
-          onClick={handleSubmit}
-          disabled={loading || !content.trim()}
-          size="sm"
-          className="w-full bg-teal hover:bg-teal-light text-white text-xs font-semibold"
-        >
-          {loading
-            ? "Submitting..."
-            : isOnBehalf
-            ? "Submit on Their Behalf"
-            : currentRound === 1
-            ? "Submit Position"
-            : "Submit Revised Position"}
-        </Button>
+
+        {/* Attachment previews */}
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {attachments.map((att) => (
+              <div
+                key={att.url}
+                className="relative group bg-white/5 border border-white/10 rounded-md overflow-hidden"
+              >
+                {isImage(att.contentType) ? (
+                  <img
+                    src={att.url}
+                    alt={att.filename}
+                    className="w-16 h-16 object-cover"
+                  />
+                ) : (
+                  <div className="w-16 h-16 flex flex-col items-center justify-center px-1">
+                    <svg className="w-5 h-5 text-slate-gray mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    <span className="text-[8px] text-slate-gray truncate w-full text-center">
+                      {att.filename.length > 12 ? att.filename.slice(0, 9) + "..." : att.filename}
+                    </span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeAttachment(att.url)}
+                  className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          {/* File upload button */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+            multiple
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <Button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading || attachments.length >= 5}
+            size="sm"
+            variant="secondary"
+            className="bg-navy-light border border-white/10 text-slate-gray hover:text-white hover:bg-white/5 text-xs shrink-0"
+          >
+            {uploading ? (
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 border border-slate-gray/30 border-t-slate-gray rounded-full animate-spin" />
+                Uploading...
+              </span>
+            ) : (
+              <span className="flex items-center gap-1">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+                </svg>
+                Attach
+              </span>
+            )}
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={loading || !content.trim()}
+            size="sm"
+            className="flex-1 bg-teal hover:bg-teal-light text-white text-xs font-semibold"
+          >
+            {loading
+              ? "Submitting..."
+              : isOnBehalf
+              ? "Submit on Their Behalf"
+              : currentRound === 1
+              ? "Submit Position"
+              : "Submit Revised Position"}
+          </Button>
+        </div>
       </div>
     </div>
   );

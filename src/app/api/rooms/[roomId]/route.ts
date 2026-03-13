@@ -23,7 +23,10 @@ export async function GET(
         include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
       },
       positions: {
-        include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+        include: {
+          user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+          attachments: true,
+        },
         orderBy: { createdAt: "asc" },
       },
       syntheses: { orderBy: { roundNumber: "asc" } },

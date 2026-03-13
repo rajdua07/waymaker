@@ -1,27 +1,96 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { DECISION_TYPES } from "@/lib/constants";
-import type { DecisionType, CriterionDef } from "@/types";
+import type { DecisionType, CriterionDef, UserBasic } from "@/types";
 import { PairwiseTuner } from "@/components/room/pairwise-tuner";
+
+interface TeamData {
+  id: string;
+  name: string;
+  members: Array<{
+    id: string;
+    userId: string;
+    role: string;
+    user: UserBasic;
+  }>;
+}
 
 export default function CreateRoomPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [email, setEmail] = useState("");
-  const [participantEmails, setParticipantEmails] = useState<string[]>([]);
   const [decisionType, setDecisionType] = useState<DecisionType | null>(null);
   const [criteria, setCriteria] = useState<CriterionDef[]>([]);
   const [showTuner, setShowTuner] = useState(false);
   const [customName, setCustomName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Team-based participants
+  const [teams, setTeams] = useState<TeamData[]>([]);
+  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [teamsLoading, setTeamsLoading] = useState(true);
+  const [newTeamName, setNewTeamName] = useState("");
+  const [creatingTeam, setCreatingTeam] = useState(false);
+
+  const fetchTeams = useCallback(async () => {
+    const res = await fetch("/api/teams");
+    if (res.ok) {
+      const data = await res.json();
+      setTeams(data);
+    }
+    setTeamsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchTeams();
+  }, [fetchTeams]);
+
+  const selectedTeam = teams.find((t) => t.id === selectedTeamId);
+
+  function handleTeamSelect(teamId: string) {
+    setSelectedTeamId(teamId);
+    setSelectedUserIds(new Set());
+  }
+
+  function toggleMember(userId: string) {
+    // Can't deselect yourself (creator is always included)
+    if (userId === session?.user?.id) return;
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  }
+
+  async function handleCreateTeam() {
+    if (!newTeamName.trim()) return;
+    setCreatingTeam(true);
+    const res = await fetch("/api/teams", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newTeamName.trim() }),
+    });
+    if (res.ok) {
+      const team = await res.json();
+      await fetchTeams();
+      setSelectedTeamId(team.id);
+      setNewTeamName("");
+    }
+    setCreatingTeam(false);
+  }
 
   function selectType(type: DecisionType) {
     const config = DECISION_TYPES.find((t) => t.id === type);
@@ -34,7 +103,6 @@ export default function CreateRoomPage() {
     const name = customName.trim();
     if (!name || criteria.length >= 5 || criteria.some((c) => c.name.toLowerCase() === name.toLowerCase())) return;
     const newCriteria = [...criteria, { name, weight: 0, isMustHave: false }];
-    // Recalculate equal weights
     const w = +(1 / newCriteria.length).toFixed(4);
     setCriteria(newCriteria.map((c) => ({ ...c, weight: w })));
     setCustomName("");
@@ -58,18 +126,6 @@ export default function CreateRoomPage() {
     );
   }
 
-  function addEmail() {
-    const trimmed = email.trim().toLowerCase();
-    if (trimmed && trimmed.includes("@") && !participantEmails.includes(trimmed)) {
-      setParticipantEmails([...participantEmails, trimmed]);
-      setEmail("");
-    }
-  }
-
-  function removeEmail(e: string) {
-    setParticipantEmails(participantEmails.filter((p) => p !== e));
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!decisionType) {
@@ -80,8 +136,12 @@ export default function CreateRoomPage() {
       setError("Add at least one criterion");
       return;
     }
-    if (participantEmails.length === 0) {
-      setError("Add at least one participant");
+    if (!selectedTeamId) {
+      setError("Select a team");
+      return;
+    }
+    if (selectedUserIds.size === 0) {
+      setError("Select at least one team member");
       return;
     }
 
@@ -94,7 +154,8 @@ export default function CreateRoomPage() {
       body: JSON.stringify({
         title,
         description,
-        participantEmails,
+        teamId: selectedTeamId,
+        participantUserIds: [...selectedUserIds],
         decisionType,
         criteria,
       }),
@@ -111,15 +172,13 @@ export default function CreateRoomPage() {
     router.push(`/rooms/${room.id}`);
   }
 
-  const selectedConfig = DECISION_TYPES.find((t) => t.id === decisionType);
-
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-xl font-bold text-white mb-1">
         Create Decision Room
       </h1>
       <p className="text-sm text-slate-gray mb-8">
-        Define the topic, pick a decision type, invite participants.
+        Define the topic, pick a decision type, select your team.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-8">
@@ -148,6 +207,141 @@ export default function CreateRoomPage() {
             rows={3}
             className="bg-navy-light border-white/10 text-white placeholder:text-slate-gray resize-none"
           />
+        </div>
+
+        {/* --- Team & Participants --- */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-gray uppercase tracking-wider mb-3">
+            Team & Participants
+          </label>
+
+          {teamsLoading ? (
+            <div className="text-xs text-slate-gray py-4 text-center">Loading teams...</div>
+          ) : teams.length === 0 ? (
+            <div className="bg-navy-light border border-white/10 rounded-lg p-4">
+              <p className="text-xs text-slate-gray mb-3">
+                You need a team to create a room. Create one to get started.
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Team name"
+                  value={newTeamName}
+                  onChange={(e) => setNewTeamName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleCreateTeam();
+                    }
+                  }}
+                  className="bg-navy border-white/10 text-white placeholder:text-slate-gray"
+                />
+                <Button
+                  type="button"
+                  onClick={handleCreateTeam}
+                  disabled={creatingTeam || !newTeamName.trim()}
+                  className="bg-teal hover:bg-teal-light text-white text-xs shrink-0"
+                >
+                  {creatingTeam ? "Creating..." : "Create Team"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Team selector */}
+              <select
+                value={selectedTeamId}
+                onChange={(e) => handleTeamSelect(e.target.value)}
+                className="w-full bg-navy-light border border-white/10 text-white text-sm rounded-lg px-3 py-2.5 outline-none focus:border-teal/50 mb-3"
+              >
+                <option value="">Select a team...</option>
+                {teams.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name} ({team.members.length} member{team.members.length !== 1 ? "s" : ""})
+                  </option>
+                ))}
+              </select>
+
+              {/* Inline create team */}
+              <div className="flex gap-2 mb-3">
+                <Input
+                  placeholder="Or create a new team..."
+                  value={newTeamName}
+                  onChange={(e) => setNewTeamName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleCreateTeam();
+                    }
+                  }}
+                  className="bg-navy-light border-white/10 text-white text-xs placeholder:text-slate-gray"
+                />
+                <Button
+                  type="button"
+                  onClick={handleCreateTeam}
+                  disabled={creatingTeam || !newTeamName.trim()}
+                  variant="secondary"
+                  className="bg-navy-light border border-white/10 text-white hover:bg-white/5 text-xs shrink-0"
+                >
+                  {creatingTeam ? "..." : "Create"}
+                </Button>
+              </div>
+
+              {/* Member checkboxes */}
+              {selectedTeam && (
+                <div className="space-y-1">
+                  {selectedTeam.members.map((member) => {
+                    const isCreator = member.userId === session?.user?.id;
+                    const isSelected = isCreator || selectedUserIds.has(member.userId);
+                    return (
+                      <button
+                        key={member.userId}
+                        type="button"
+                        onClick={() => toggleMember(member.userId)}
+                        disabled={isCreator}
+                        className={`w-full flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all text-left ${
+                          isSelected
+                            ? "border-teal/40 bg-teal/5"
+                            : "border-white/10 bg-navy-light hover:border-white/20"
+                        } ${isCreator ? "opacity-70 cursor-default" : ""}`}
+                      >
+                        {/* Checkbox */}
+                        <div
+                          className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                            isSelected
+                              ? "bg-teal border-teal"
+                              : "border-white/20"
+                          }`}
+                        >
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        {/* Avatar */}
+                        <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                          {(member.user.name || member.user.email)[0].toUpperCase()}
+                        </div>
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-white font-medium truncate">
+                            {member.user.name || member.user.email.split("@")[0]}
+                            {isCreator && (
+                              <span className="text-[10px] text-teal ml-2 font-normal">you (auto-included)</span>
+                            )}
+                          </p>
+                          <p className="text-[10px] text-slate-gray truncate">{member.user.email}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  <p className="text-[10px] text-slate-gray mt-1">
+                    {selectedUserIds.size + 1} participant{selectedUserIds.size + 1 !== 1 ? "s" : ""} selected (including you)
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* --- Decision Type Selector --- */}
@@ -219,8 +413,6 @@ export default function CreateRoomPage() {
                 </div>
               ))}
             </div>
-
-            {/* Pairwise Tuner Toggle */}
             {criteria.length >= 2 && (
               <div className="mt-4">
                 {!showTuner ? (
@@ -317,8 +509,6 @@ export default function CreateRoomPage() {
                 ))}
               </div>
             )}
-
-            {/* Pairwise Tuner for Custom */}
             {criteria.length >= 2 && (
               <div className="mt-4">
                 {!showTuner ? (
@@ -350,49 +540,6 @@ export default function CreateRoomPage() {
             )}
           </div>
         )}
-
-        {/* --- Participants --- */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-gray uppercase tracking-wider mb-2">
-            Participants
-          </label>
-          <div className="flex gap-2">
-            <Input
-              type="email"
-              placeholder="Enter email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addEmail();
-                }
-              }}
-              className="bg-navy-light border-white/10 text-white placeholder:text-slate-gray"
-            />
-            <Button
-              type="button"
-              onClick={addEmail}
-              variant="secondary"
-              className="bg-navy-light border border-white/10 text-white hover:bg-white/5 shrink-0"
-            >
-              Add
-            </Button>
-          </div>
-          {participantEmails.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {participantEmails.map((e) => (
-                <Badge
-                  key={e}
-                  className="bg-teal/10 text-teal text-xs cursor-pointer hover:bg-teal/20"
-                  onClick={() => removeEmail(e)}
-                >
-                  {e} &times;
-                </Badge>
-              ))}
-            </div>
-          )}
-        </div>
 
         {error && <p className="text-destructive text-sm">{error}</p>}
 
