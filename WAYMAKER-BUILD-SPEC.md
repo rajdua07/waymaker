@@ -14,7 +14,7 @@ Web application with **Decision Rooms** — the async workflow for structured de
 
 ### Core Flow
 
-1. **Create a Decision Room** — Name the topic, invite 2–10 participants, set decision criteria (speed, risk, cost, innovation)
+1. **Create a Decision Room** — Name the topic, invite 2–10 participants, pick a decision type (see Decision Criteria section below)
 2. **Everyone Contributes** — Each participant submits their position (typed directly, pasted from ChatGPT/Claude, or pulled from docs)
 3. **AI Arbitrates** — Waymaker ingests all inputs, maps agreements and conflicts, scores argument strength with full source attribution
 4. **Iterate** — Participants respond to the synthesis. Waymaker re-arbitrates with confidence scoring. Multi-round convergence
@@ -85,7 +85,7 @@ Web application with **Decision Rooms** — the async workflow for structured de
 - id, name, owner_id, member_ids[], created_at
 
 ### Decision Room
-- id, title, description, team_id, creator_id, participant_ids[], criteria (JSON: {speed: 0-1, risk: 0-1, cost: 0-1, innovation: 0-1}), status (collecting | analyzing | converging | decided), current_round, created_at
+- id, title, description, team_id, creator_id, participant_ids[], decision_type (prioritization | go_no_go | direction | resolution | custom), criteria (JSON: [{name, weight, is_must_have}]), status (collecting | analyzing | converging | decided), current_round, created_at
 
 ### Position
 - id, room_id, user_id, round_number, content (text), created_at
@@ -101,7 +101,7 @@ Web application with **Decision Rooms** — the async workflow for structured de
 ## Key UI Pages
 
 1. **Dashboard** — List of active Decision Rooms, recent decisions, team overview
-2. **Create Room** — Form: title, description, invite participants, set criteria sliders
+2. **Create Room** — Form: title, description, invite participants, pick decision type (Prioritization / Go-No-Go / Direction / Resolution / Custom), optional pairwise criteria tuning
 3. **Decision Room** — Three-panel layout:
    - Left: Participant position cards (who said what)
    - Center: Decision Arena visualization (node graph with edges showing agreement/conflict)
@@ -125,7 +125,9 @@ You are Waymaker, an AI decision arbitrator. You have received {N} positions on 
 
 **Topic:** {room.title}
 **Description:** {room.description}
-**Decision Criteria:** Speed: {criteria.speed}, Risk: {criteria.risk}, Cost: {criteria.cost}, Innovation: {criteria.innovation}
+**Decision Type:** {room.decision_type} (e.g., "Prioritization")
+**Criteria:** {for each criterion: "{name} (weight: {weight}, must-have: {is_must_have})"}
+**Creator's Intent:** {plain language summary, e.g., "Impact and urgency matter most"}
 
 **Positions:**
 {for each position: "[Name] ([Role]): {position.content}"}
@@ -133,12 +135,29 @@ You are Waymaker, an AI decision arbitrator. You have received {N} positions on 
 Your task:
 1. Identify CONSENSUS POINTS — things 2+ participants agree on
 2. Identify KEY CONFLICTS — where positions fundamentally diverge
-3. RANK each argument 1-10 based on: evidence strength, alignment with stated criteria, feasibility
-4. Produce a RECOMMENDATION that synthesizes the strongest elements, with a confidence score (0-100%)
-5. For every claim in your recommendation, cite which participant's input it draws from
+3. Score each argument against EACH criterion (1-10) and show the breakdown
+4. Check MUST-HAVE constraints — flag any option that violates them as a dealbreaker
+5. Produce a RECOMMENDATION that synthesizes the strongest elements, with a confidence score (0-100%)
+6. For every claim in your recommendation, cite which participant's input it draws from
+7. NEVER show raw weights in the output. Instead, explain reasoning in plain language using the criteria as your vocabulary (e.g., "You said impact matters most. Sarah's proposal scores highest on impact because...")
+8. If the highest-scoring option conflicts with the most popular position, flag the tension explicitly
 
 Output as structured JSON.
 ```
+
+### Decision Type Defaults
+
+When creating a room, the user picks a type. Each auto-loads criteria:
+
+| Type | Default Criteria |
+|---|---|
+| **Prioritization** | Impact, Effort, Urgency |
+| **Go / No-Go** | Upside, Downside Risk, Confidence |
+| **Direction** | Strategic Alignment, Differentiation, Feasibility |
+| **Resolution** | Evidence Strength, Fairness, Reversibility |
+| **Custom** | User defines up to 5 criteria |
+
+See `WAYMAKER-DECISION-CRITERIA-SPEC.md` for the full UX spec including pairwise tuning, team profiles, and edge cases.
 
 ---
 
