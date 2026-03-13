@@ -5,6 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import type { SynthesisData, PositionAttachment } from "@/types";
 
+function blobProxy(url: string) {
+  return `/api/blob?url=${encodeURIComponent(url)}`;
+}
+
 interface Participant {
   userId: string;
   user: { id: string; name: string | null; email: string };
@@ -198,7 +202,7 @@ export function PositionInput({
               >
                 {isImage(att.contentType) ? (
                   <img
-                    src={att.url}
+                    src={blobProxy(att.url)}
                     alt={att.filename}
                     className="w-16 h-16 object-cover"
                   />

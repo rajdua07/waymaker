@@ -4,6 +4,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { PositionWithUser } from "@/types";
 import { cn } from "@/lib/utils";
 
+function blobProxy(url: string) {
+  return `/api/blob?url=${encodeURIComponent(url)}`;
+}
+
 interface PositionCardProps {
   position: PositionWithUser;
   color: string;
@@ -60,14 +64,14 @@ export function PositionCard({ position, color, isSelected, onClick }: PositionC
             att.contentType.startsWith("image/") ? (
               <a
                 key={att.id}
-                href={att.url}
+                href={blobProxy(att.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className="block w-12 h-12 rounded overflow-hidden border border-white/10 hover:border-teal/40 transition-colors"
               >
                 <img
-                  src={att.url}
+                  src={blobProxy(att.url)}
                   alt={att.filename}
                   className="w-full h-full object-cover"
                 />
@@ -75,7 +79,7 @@ export function PositionCard({ position, color, isSelected, onClick }: PositionC
             ) : (
               <a
                 key={att.id}
-                href={att.url}
+                href={blobProxy(att.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}

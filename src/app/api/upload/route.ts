@@ -40,8 +40,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const blob = await put(`positions/${session.user.id}/${Date.now()}-${file.name}`, file, {
+  const pathname = `positions/${session.user.id}/${Date.now()}-${file.name}`;
+  const blob = await put(pathname, file, {
     access: "public",
+    addRandomSuffix: true,
   });
 
   return NextResponse.json({
