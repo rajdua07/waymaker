@@ -1,9 +1,19 @@
-export interface Criteria {
-  speed: number;
-  risk: number;
-  cost: number;
-  innovation: number;
+// --- Decision Types & Criteria ---
+
+export type DecisionType =
+  | "prioritization"
+  | "go-no-go"
+  | "direction"
+  | "resolution"
+  | "custom";
+
+export interface CriterionDef {
+  name: string;
+  weight: number; // 0-1, normalized across all criteria
+  isMustHave: boolean;
 }
+
+// --- User ---
 
 export interface UserBasic {
   id: string;
@@ -12,13 +22,16 @@ export interface UserBasic {
   avatarUrl: string | null;
 }
 
+// --- Room ---
+
 export interface RoomWithDetails {
   id: string;
   title: string;
   description: string | null;
   teamId: string | null;
   creatorId: string;
-  criteria: Criteria;
+  decisionType: DecisionType;
+  criteria: CriterionDef[];
   status: string;
   currentRound: number;
   createdAt: string;
@@ -43,6 +56,8 @@ export interface RoomDocument {
   createdAt: string;
 }
 
+// --- Position ---
+
 export interface PositionWithUser {
   id: string;
   roomId: string;
@@ -52,6 +67,8 @@ export interface PositionWithUser {
   createdAt: string;
   user: UserBasic;
 }
+
+// --- Synthesis ---
 
 export interface ArgumentRanking {
   userId: string;
@@ -80,6 +97,8 @@ export interface SynthesisData {
   createdAt: string;
 }
 
+// --- Decision ---
+
 export interface DecisionData {
   id: string;
   roomId: string;
@@ -93,12 +112,16 @@ export interface DecisionData {
   }>;
 }
 
+// --- Events ---
+
 export interface RoomEvent {
   status: string;
   currentRound: number;
   positionCount: number;
   updatedAt: string;
 }
+
+// --- Arena ---
 
 export interface ArenaNode {
   id: string;

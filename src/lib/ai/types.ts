@@ -1,3 +1,5 @@
+import type { CriterionDef, DecisionType } from "@/types";
+
 export interface SynthesisResult {
   consensusPoints: string[];
   conflicts: Array<{
@@ -17,9 +19,4 @@ export interface SynthesisResult {
   confidence: number;
 }
 
-export interface CriteriaWeights {
-  speed: number;
-  risk: number;
-  cost: number;
-  innovation: number;
-}
+export type { CriterionDef, DecisionType };

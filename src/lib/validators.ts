@@ -1,16 +1,24 @@
 import { z } from "zod/v4";
 
+const criterionSchema = z.object({
+  name: z.string().min(1).max(80),
+  weight: z.number().min(0).max(1),
+  isMustHave: z.boolean(),
+});
+
 export const createRoomSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(2000).optional(),
   teamId: z.string().optional(),
   participantEmails: z.array(z.email()).min(1).max(10),
-  criteria: z.object({
-    speed: z.number().min(0).max(1),
-    risk: z.number().min(0).max(1),
-    cost: z.number().min(0).max(1),
-    innovation: z.number().min(0).max(1),
-  }),
+  decisionType: z.enum([
+    "prioritization",
+    "go-no-go",
+    "direction",
+    "resolution",
+    "custom",
+  ]),
+  criteria: z.array(criterionSchema).min(1).max(5),
 });
 
 export const submitPositionSchema = z.object({

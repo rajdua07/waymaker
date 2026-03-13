@@ -1,3 +1,5 @@
+import type { DecisionType, CriterionDef } from "@/types";
+
 export const ROOM_STATUSES = {
   COLLECTING: "collecting",
   ANALYZING: "analyzing",
@@ -26,9 +28,73 @@ export const EDGE_COLORS = {
   partial: "#F59E0B",
 } as const;
 
-export const DEFAULT_CRITERIA = {
-  speed: 0.5,
-  risk: 0.5,
-  cost: 0.5,
-  innovation: 0.5,
-};
+// --- Decision Types ---
+
+export interface DecisionTypeConfig {
+  id: DecisionType;
+  label: string;
+  question: string;
+  description: string;
+  defaultCriteria: CriterionDef[];
+}
+
+function equalWeight(names: string[]): CriterionDef[] {
+  const w = +(1 / names.length).toFixed(4);
+  return names.map((name) => ({ name, weight: w, isMustHave: false }));
+}
+
+export const DECISION_TYPES: DecisionTypeConfig[] = [
+  {
+    id: "prioritization",
+    label: "Prioritization",
+    question: "What should we do first?",
+    description:
+      "Roadmap decisions, backlog grooming, resource allocation, feature prioritization",
+    defaultCriteria: equalWeight(["Impact", "Effort", "Urgency"]),
+  },
+  {
+    id: "go-no-go",
+    label: "Go / No-Go",
+    question: "Should we do this at all?",
+    description:
+      "Launch decisions, new hires, partnerships, investments, vendor selection",
+    defaultCriteria: equalWeight(["Upside", "Downside Risk", "Confidence"]),
+  },
+  {
+    id: "direction",
+    label: "Direction",
+    question: "Which path should we take?",
+    description:
+      "Strategy debates, architecture decisions, positioning, market entry",
+    defaultCriteria: equalWeight([
+      "Strategic Alignment",
+      "Differentiation",
+      "Feasibility",
+    ]),
+  },
+  {
+    id: "resolution",
+    label: "Resolution",
+    question: "How do we settle this?",
+    description:
+      "Conflicting proposals, interpersonal disagreements, competing visions",
+    defaultCriteria: equalWeight([
+      "Evidence Strength",
+      "Fairness",
+      "Reversibility",
+    ]),
+  },
+  {
+    id: "custom",
+    label: "Custom",
+    question: "Something else entirely",
+    description: "Name your own criteria (up to 5). Full control.",
+    defaultCriteria: [],
+  },
+];
+
+export function getDecisionTypeConfig(
+  id: DecisionType
+): DecisionTypeConfig | undefined {
+  return DECISION_TYPES.find((t) => t.id === id);
+}

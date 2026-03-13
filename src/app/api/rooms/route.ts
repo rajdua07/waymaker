@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
       description: parsed.data.description,
       teamId: parsed.data.teamId,
       creatorId: session.user.id,
+      decisionType: parsed.data.decisionType,
       criteria: JSON.stringify(parsed.data.criteria),
       participants: {
         create: [

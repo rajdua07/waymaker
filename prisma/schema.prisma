@@ -92,7 +92,8 @@ model DecisionRoom {
   description  String?
   teamId       String?
   creatorId    String
-  criteria     String   @default("{\"speed\":0.5,\"risk\":0.5,\"cost\":0.5,\"innovation\":0.5}")
+  decisionType String   @default("custom")
+  criteria     String   @default("[]")
   status       String   @default("collecting")
   currentRound Int      @default(1)
   createdAt    DateTime @default(now())

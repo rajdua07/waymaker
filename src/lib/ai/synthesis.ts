@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
 import { buildSynthesisPrompt } from "./prompts";
-import type { SynthesisResult, CriteriaWeights } from "./types";
+import type { SynthesisResult, CriterionDef, DecisionType } from "./types";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -54,7 +54,8 @@ export async function runSynthesis(roomId: string): Promise<SynthesisResult> {
     };
   }
 
-  const criteria = JSON.parse(room.criteria) as CriteriaWeights;
+  const criteria = JSON.parse(room.criteria) as CriterionDef[];
+  const decisionType = (room.decisionType || "custom") as DecisionType;
 
   // Load context documents
   const documents = await prisma.roomDocument.findMany({
@@ -65,6 +66,7 @@ export async function runSynthesis(roomId: string): Promise<SynthesisResult> {
   const prompt = buildSynthesisPrompt({
     title: room.title,
     description: room.description || "",
+    decisionType,
     criteria,
     positions: positions.map((p) => ({
       userId: p.userId,
