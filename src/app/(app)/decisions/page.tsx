@@ -37,11 +37,11 @@ export default function DecisionLogPage() {
   }, [page, search]);
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-xl font-bold text-white">Decision Log</h1>
-          <p className="text-sm text-slate-gray mt-1">Searchable history of all decisions</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Decision Log</h1>
+          <p className="text-sm text-slate-gray mt-2">Searchable history of all decisions</p>
         </div>
       </div>
 
@@ -52,17 +52,21 @@ export default function DecisionLogPage() {
           setSearch(e.target.value);
           setPage(1);
         }}
-        className="bg-navy-light border-white/10 text-white placeholder:text-slate-gray mb-6 max-w-md"
+        className="mb-6 max-w-md"
       />
 
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-card rounded-lg border border-white/[0.06] p-4 h-20 animate-pulse" />
+            <div key={i} className="rounded-xl border border-white/[0.06] p-5 h-24">
+              <div className="skeleton h-4 w-1/2 mb-3" />
+              <div className="skeleton h-3 w-full mb-2" />
+              <div className="skeleton h-3 w-1/3" />
+            </div>
           ))}
         </div>
       ) : decisions.length === 0 ? (
-        <div className="text-center py-20">
+        <div className="text-center py-24">
           <p className="text-slate-gray text-sm">No decisions found.</p>
         </div>
       ) : (
@@ -72,20 +76,23 @@ export default function DecisionLogPage() {
               <Link
                 key={d.id}
                 href={`/rooms/${d.room.id}`}
-                className="block bg-card rounded-lg border border-white/[0.06] p-4 hover:border-teal/30 transition-colors"
+                className="block bg-white/[0.03] backdrop-blur-sm rounded-xl border border-white/[0.06] p-5 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)] hover:border-white/[0.10] hover:-translate-y-[1px] transition-all duration-200 group"
               >
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-white">{d.room.title}</h3>
-                  <Badge className="bg-agree/20 text-agree text-[10px] shrink-0 ml-2">
+                  <h3 className="text-sm font-semibold text-white group-hover:text-teal-light transition-colors">{d.room.title}</h3>
+                  <Badge className="bg-agree/15 text-agree border-agree/20 text-xs shrink-0 ml-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
                     Decided
                   </Badge>
                 </div>
-                <p className="text-xs text-white/70 line-clamp-2 mb-2">
+                <p className="text-sm text-white/70 line-clamp-2 mb-3">
                   {d.finalRecommendation}
                 </p>
-                <div className="flex items-center gap-4 text-[10px] text-slate-gray">
+                <div className="flex items-center gap-4 text-xs text-slate-gray">
                   <span>{new Date(d.decisionDate).toLocaleDateString()}</span>
+                  <span className="text-white/20">|</span>
                   <span>{d.room.participants.length} participants</span>
+                  <span className="text-white/20">|</span>
                   <span>{d.acceptances.length} accepted</span>
                 </div>
               </Link>
@@ -93,13 +100,12 @@ export default function DecisionLogPage() {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
+            <div className="flex items-center justify-center gap-3 mt-8">
               <Button
                 variant="secondary"
                 size="sm"
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
-                className="bg-navy-light border border-white/10 text-white text-xs h-8 hover:bg-white/5"
               >
                 Previous
               </Button>
@@ -111,7 +117,6 @@ export default function DecisionLogPage() {
                 size="sm"
                 disabled={page >= totalPages}
                 onClick={() => setPage(page + 1)}
-                className="bg-navy-light border border-white/10 text-white text-xs h-8 hover:bg-white/5"
               >
                 Next
               </Button>

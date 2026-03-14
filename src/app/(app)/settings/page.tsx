@@ -33,11 +33,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto p-6">
-      <h1 className="text-xl font-bold text-white mb-1">Settings</h1>
-      <p className="text-sm text-slate-gray mb-8">Manage your profile and preferences.</p>
+    <div className="max-w-lg mx-auto p-8">
+      <h1 className="text-2xl font-bold text-white tracking-tight mb-1">Settings</h1>
+      <p className="text-sm text-slate-gray mb-10">Manage your profile and preferences.</p>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
           <label className="block text-xs font-semibold text-slate-gray uppercase tracking-wider mb-2">
             Email
@@ -45,7 +45,6 @@ export default function SettingsPage() {
           <Input
             value={session?.user?.email || ""}
             disabled
-            className="bg-navy-light border-white/10 text-slate-gray"
           />
         </div>
 
@@ -56,14 +55,13 @@ export default function SettingsPage() {
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="bg-navy-light border-white/10 text-white placeholder:text-slate-gray"
           />
         </div>
 
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="bg-teal hover:bg-teal-light text-white font-semibold"
+          className="font-semibold"
         >
           {saving ? "Saving..." : "Save Changes"}
         </Button>

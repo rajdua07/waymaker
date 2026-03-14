@@ -33,15 +33,21 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-56 h-screen bg-navy-light border-r border-white/[0.06] flex flex-col">
-      <div className="p-5">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <span className="text-teal font-extrabold text-lg tracking-[2px]">WAY</span>
+    <aside className="w-60 h-screen bg-surface-1/80 backdrop-blur-md border-r border-white/[0.06] flex flex-col">
+      <div className="p-6 mb-2">
+        <Link href="/dashboard" className="flex items-center gap-1.5 group">
+          <div className="relative">
+            <div className="absolute -inset-3 bg-teal/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <span className="relative text-teal font-extrabold text-lg tracking-[2px]">WAY</span>
+          </div>
           <span className="text-white font-extrabold text-lg tracking-[2px]">MAKER</span>
         </Link>
       </div>
 
       <nav className="flex-1 px-3 py-2">
+        <p className="px-3 mb-3 text-[10px] font-bold text-slate-gray/50 uppercase tracking-[2px]">
+          Navigation
+        </p>
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
@@ -49,12 +55,15 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors mb-1",
+                "relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 mb-0.5",
                 isActive
-                  ? "bg-teal/10 text-teal"
+                  ? "bg-white/[0.06] text-white"
                   : "text-slate-gray hover:text-white hover:bg-white/[0.04]"
               )}
             >
+              {isActive && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-teal rounded-r-full shadow-[var(--glow-teal-sm)]" />
+              )}
               {icons[item.icon]}
               {item.label}
             </Link>
@@ -62,10 +71,10 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-white/[0.06]">
+      <div className="p-4 border-t border-white/[0.04]">
         <Link
           href="/rooms/new"
-          className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-teal text-white text-sm font-semibold rounded-lg hover:bg-teal-light transition-colors"
+          className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-gradient-to-b from-teal to-teal/90 text-white text-sm font-semibold rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[var(--glow-teal-sm)] hover:from-teal-light hover:to-teal transition-all duration-200 active:scale-[0.98]"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path d="M12 4v16m8-8H4" />

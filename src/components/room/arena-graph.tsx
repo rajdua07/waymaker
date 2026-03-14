@@ -19,11 +19,24 @@ export function ArenaGraph({ nodes, edges, selectedId, onSelectNode, confidence 
     <svg viewBox="0 0 600 600" className="w-full h-full">
       <defs>
         <radialGradient id="centerGlow">
-          <stop offset="0%" stopColor="#0D9488" stopOpacity="0.15" />
+          <stop offset="0%" stopColor="#0D9488" stopOpacity="0.25" />
+          <stop offset="40%" stopColor="#0D9488" stopOpacity="0.08" />
           <stop offset="100%" stopColor="#0D9488" stopOpacity="0" />
         </radialGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="blur" />
+        <radialGradient id="centerGlowOuter">
+          <stop offset="0%" stopColor="#0D9488" stopOpacity="0.08" />
+          <stop offset="100%" stopColor="#0D9488" stopOpacity="0" />
+        </radialGradient>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="glowStrong" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="8" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
@@ -36,7 +49,8 @@ export function ArenaGraph({ nodes, edges, selectedId, onSelectNode, confidence 
 
       {/* Background */}
       <rect width="600" height="600" fill="url(#grid)" />
-      <circle cx={cx} cy={cy} r="200" fill="url(#centerGlow)" />
+      <circle cx={cx} cy={cy} r="250" fill="url(#centerGlowOuter)" />
+      <circle cx={cx} cy={cy} r="160" fill="url(#centerGlow)" />
 
       {/* Edges */}
       {edges.map((edge, i) => {
@@ -51,6 +65,12 @@ export function ArenaGraph({ nodes, edges, selectedId, onSelectNode, confidence 
 
         return (
           <g key={`edge-${i}`}>
+            {/* Glow layer behind edge */}
+            <line
+              x1={from.x} y1={from.y} x2={to.x} y2={to.y}
+              stroke={color} strokeWidth="6" strokeOpacity="0.08"
+              strokeDasharray={dashArray}
+            />
             <line
               x1={from.x}
               y1={from.y}
@@ -58,7 +78,7 @@ export function ArenaGraph({ nodes, edges, selectedId, onSelectNode, confidence 
               y2={to.y}
               stroke={color}
               strokeWidth="2"
-              strokeOpacity="0.3"
+              strokeOpacity="0.4"
               strokeDasharray={dashArray}
               className="transition-all duration-500"
             />
@@ -80,6 +100,8 @@ export function ArenaGraph({ nodes, edges, selectedId, onSelectNode, confidence 
 
       {/* Center Waymaker node */}
       <circle cx={cx} cy={cy} r="60" fill="#0D9488" fillOpacity="0.05" />
+      {/* Pulsing outer ring */}
+      <circle cx={cx} cy={cy} r="50" fill="none" stroke="#0D9488" strokeWidth="1" strokeOpacity="0.1" className="animate-pulse-glow" />
       <circle
         cx={cx}
         cy={cy}
@@ -95,11 +117,11 @@ export function ArenaGraph({ nodes, edges, selectedId, onSelectNode, confidence 
       <circle
         cx={cx}
         cy={cy}
-        r="32"
+        r="34"
         fill="#0F1B2D"
         stroke="#0D9488"
-        strokeWidth="2"
-        filter="url(#glow)"
+        strokeWidth="2.5"
+        filter="url(#glowStrong)"
       />
       <text x={cx} y={cy - 4} textAnchor="middle" fill="#0D9488" fontSize="10" fontWeight="800" letterSpacing="1.5">
         WAY
@@ -123,16 +145,27 @@ export function ArenaGraph({ nodes, edges, selectedId, onSelectNode, confidence 
             style={{ transformOrigin: `${node.x}px ${node.y}px` }}
             onClick={() => onSelectNode(node.id)}
           >
+            {/* Selection glow halo */}
+            {isSelected && (
+              <circle
+                cx={node.x}
+                cy={node.y}
+                r="40"
+                fill={node.color}
+                fillOpacity="0.06"
+                filter="url(#glow)"
+              />
+            )}
             {/* Selection ring */}
             {isSelected && (
               <circle
                 cx={node.x}
                 cy={node.y}
-                r="36"
+                r="38"
                 fill="none"
                 stroke={node.color}
                 strokeWidth="1"
-                strokeOpacity="0.3"
+                strokeOpacity="0.4"
                 strokeDasharray="4 2"
               />
             )}
@@ -140,11 +173,12 @@ export function ArenaGraph({ nodes, edges, selectedId, onSelectNode, confidence 
             <circle
               cx={node.x}
               cy={node.y}
-              r="28"
-              fill="#1A2940"
+              r="30"
+              fill="#142236"
               stroke={node.color}
-              strokeWidth={isSelected ? 3 : 2}
-              strokeOpacity={isSelected ? 1 : 0.8}
+              strokeWidth={isSelected ? 2.5 : 1.5}
+              strokeOpacity={isSelected ? 1 : 0.6}
+              filter={isSelected ? "url(#glow)" : undefined}
             />
             {/* Initials */}
             <text
@@ -153,7 +187,7 @@ export function ArenaGraph({ nodes, edges, selectedId, onSelectNode, confidence 
               textAnchor="middle"
               dominantBaseline="central"
               fill="white"
-              fontSize="11"
+              fontSize="12"
               fontWeight="700"
             >
               {node.initials}
@@ -161,10 +195,10 @@ export function ArenaGraph({ nodes, edges, selectedId, onSelectNode, confidence 
             {/* Name label below */}
             <text
               x={node.x}
-              y={node.y + 44}
+              y={node.y + 46}
               textAnchor="middle"
               fill="white"
-              fontSize="10"
+              fontSize="11"
               fontWeight="600"
             >
               {node.name.split(" ")[0]}

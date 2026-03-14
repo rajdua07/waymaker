@@ -54,13 +54,13 @@ export function ContextDocuments({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-[11px] font-bold text-slate-gray uppercase tracking-[2px]">
+        <h3 className="text-xs font-bold text-slate-gray uppercase tracking-[2px]">
           Context ({documents.length})
         </h3>
         {isCreator && !isAdding && (
           <button
             onClick={() => setIsAdding(true)}
-            className="text-[10px] text-teal hover:text-teal-light font-semibold"
+            className="text-xs text-teal hover:text-teal-light font-semibold transition-colors"
           >
             + Add
           </button>
@@ -69,26 +69,25 @@ export function ContextDocuments({
 
       {/* Add document form */}
       {isAdding && (
-        <div className="bg-navy-light border border-white/[0.06] rounded-lg p-3 space-y-2">
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-3">
           <Input
             placeholder="Document title..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="bg-navy border-white/10 text-white text-xs placeholder:text-slate-gray h-8"
           />
           <Textarea
             placeholder="Paste document content, meeting notes, research, data..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={6}
-            className="bg-navy border-white/10 text-white text-xs placeholder:text-slate-gray resize-none"
+            className="resize-none"
           />
           <div className="flex gap-2">
             <Button
               onClick={handleAdd}
               disabled={loading || !title.trim() || !content.trim()}
               size="sm"
-              className="bg-teal hover:bg-teal-light text-white text-xs h-7 flex-1"
+              className="flex-1"
             >
               {loading ? "Adding..." : "Add Document"}
             </Button>
@@ -100,7 +99,6 @@ export function ContextDocuments({
               }}
               size="sm"
               variant="secondary"
-              className="bg-navy border border-white/10 text-slate-gray text-xs h-7 hover:bg-white/5"
             >
               Cancel
             </Button>
@@ -112,11 +110,11 @@ export function ContextDocuments({
       {documents.map((doc) => (
         <div
           key={doc.id}
-          className="bg-navy-light border border-white/[0.06] rounded-lg overflow-hidden"
+          className="bg-white/[0.03] border border-white/[0.06] rounded-xl overflow-hidden"
         >
           <button
             onClick={() => setExpandedId(expandedId === doc.id ? null : doc.id)}
-            className="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+            className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
           >
             <div className="flex items-center gap-2 min-w-0">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-teal shrink-0">
@@ -143,13 +141,13 @@ export function ContextDocuments({
           </button>
           {expandedId === doc.id && (
             <div className="px-3 pb-3 border-t border-white/[0.04]">
-              <pre className="text-[11px] text-white/70 leading-relaxed whitespace-pre-wrap mt-2 max-h-48 overflow-y-auto">
+              <pre className="text-xs text-white/70 leading-relaxed whitespace-pre-wrap mt-2 max-h-48 overflow-y-auto scrollbar-thin">
                 {doc.content}
               </pre>
               {isCreator && (
                 <button
                   onClick={() => handleDelete(doc.id)}
-                  className="text-[10px] text-conflict/70 hover:text-conflict mt-2"
+                  className="text-xs text-conflict/70 hover:text-conflict mt-2 transition-colors"
                 >
                   Remove
                 </button>
@@ -160,7 +158,7 @@ export function ContextDocuments({
       ))}
 
       {documents.length === 0 && !isAdding && (
-        <p className="text-[10px] text-slate-gray/50 text-center py-3">
+        <p className="text-xs text-slate-gray/50 text-center py-3">
           No context documents added yet.
         </p>
       )}

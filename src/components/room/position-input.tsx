@@ -125,39 +125,39 @@ export function PositionInput({
       : "How has your position evolved? Address conflicts raised, build on consensus...";
 
   return (
-    <div className="border-t border-white/[0.06]">
+    <div className="border-t border-white/[0.04] bg-white/[0.01]">
       {/* Round context banner for round 2+ */}
       {currentRound > 1 && previousSynthesis && (
-        <div className="px-3 pt-3">
+        <div className="px-4 pt-4">
           <button
             onClick={() => setShowPrevContext(!showPrevContext)}
             className="w-full text-left"
           >
-            <div className="bg-gold/5 border border-gold/20 rounded-lg px-3 py-2">
+            <div className="bg-gold/5 border border-gold/15 rounded-xl px-4 py-3">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] font-bold text-gold uppercase tracking-wider">
+                <p className="text-xs font-bold text-gold uppercase tracking-wider">
                   Round {currentRound} — Refine your position
                 </p>
-                <span className="text-[10px] text-slate-gray">
+                <span className="text-xs text-slate-gray">
                   {showPrevContext ? "\u25B2" : "\u25BC"}
                 </span>
               </div>
               {showPrevContext && (
-                <div className="mt-2 space-y-1.5">
-                  <p className="text-[10px] text-white/60 leading-relaxed">
+                <div className="mt-2.5 space-y-1.5">
+                  <p className="text-xs text-white/60 leading-relaxed">
                     The AI found {previousSynthesis.consensusPoints.length} consensus point{previousSynthesis.consensusPoints.length !== 1 ? "s" : ""} and {previousSynthesis.conflicts.length} conflict{previousSynthesis.conflicts.length !== 1 ? "s" : ""} last round ({previousSynthesis.confidence}% confidence).
                   </p>
                   {previousSynthesis.conflicts.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-semibold text-conflict/80">Open conflicts:</p>
+                      <p className="text-xs font-semibold text-conflict/80">Open conflicts:</p>
                       {previousSynthesis.conflicts.map((c, i) => (
-                        <p key={i} className="text-[10px] text-white/50 ml-2">
+                        <p key={i} className="text-xs text-white/50 ml-2">
                           &bull; {c.description}
                         </p>
                       ))}
                     </div>
                   )}
-                  <p className="text-[10px] text-white/40 italic">
+                  <p className="text-xs text-white/40 italic">
                     Consider these in your updated position.
                   </p>
                 </div>
@@ -167,12 +167,12 @@ export function PositionInput({
         </div>
       )}
 
-      <div className="p-3">
+      <div className="p-4">
         {isCreator && participants.length > 0 && (
           <select
             value={selectedUserId}
             onChange={(e) => setSelectedUserId(e.target.value)}
-            className="w-full bg-navy border border-white/10 text-white text-xs rounded-md px-2 py-1.5 mb-2 outline-none focus:border-teal/50"
+            className="w-full bg-white/[0.04] border border-white/[0.08] text-white text-sm rounded-lg px-3 py-2 mb-2 outline-none focus:border-teal/50 transition-colors"
           >
             <option value="">My position</option>
             {participants
@@ -189,7 +189,7 @@ export function PositionInput({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={3}
-          className="bg-navy border-white/10 text-white text-xs placeholder:text-slate-gray resize-none mb-2"
+          className="resize-none mb-2"
         />
 
         {/* Attachment previews */}
@@ -244,7 +244,7 @@ export function PositionInput({
             disabled={uploading || attachments.length >= 5}
             size="sm"
             variant="secondary"
-            className="bg-navy-light border border-white/10 text-slate-gray hover:text-white hover:bg-white/5 text-xs shrink-0"
+            className="shrink-0"
           >
             {uploading ? (
               <span className="flex items-center gap-1">
@@ -264,7 +264,7 @@ export function PositionInput({
             onClick={handleSubmit}
             disabled={loading || !content.trim()}
             size="sm"
-            className="flex-1 bg-teal hover:bg-teal-light text-white text-xs font-semibold"
+            className="flex-1 font-semibold"
           >
             {loading
               ? "Submitting..."

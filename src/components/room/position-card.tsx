@@ -29,31 +29,31 @@ export function PositionCard({ position, color, isSelected, onClick }: PositionC
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left bg-navy-light border rounded-lg p-3 transition-all",
+        "w-full text-left bg-white/[0.03] backdrop-blur-sm border rounded-xl p-4 transition-all duration-200",
         isSelected
-          ? "border-teal/50 bg-teal/5"
-          : "border-white/[0.06] hover:border-white/[0.12]"
+          ? "border-teal/40 bg-teal/5 shadow-[var(--glow-teal-sm)]"
+          : "border-white/[0.06] hover:border-white/[0.10] hover:bg-white/[0.04]"
       )}
     >
-      <div className="flex items-center gap-2.5 mb-2">
-        <Avatar className="h-7 w-7">
+      <div className="flex items-center gap-3 mb-3">
+        <Avatar className="h-8 w-8 ring-2" style={{ '--tw-ring-color': color + '30' } as React.CSSProperties}>
           <AvatarFallback
-            className="text-[10px] font-semibold text-white"
-            style={{ backgroundColor: color + "30" }}
+            className="text-xs font-semibold text-white"
+            style={{ backgroundColor: color + "20" }}
           >
             {initials}
           </AvatarFallback>
         </Avatar>
         <div>
-          <p className="text-xs font-semibold text-white leading-tight">
+          <p className="text-sm font-semibold text-white leading-tight">
             {position.user.name || position.user.email}
           </p>
-          <p className="text-[10px] text-slate-gray">
+          <p className="text-xs text-slate-gray">
             Round {position.roundNumber}
           </p>
         </div>
       </div>
-      <p className="text-xs text-white/80 line-clamp-4 leading-relaxed">
+      <p className="text-sm text-white/80 line-clamp-4 leading-relaxed">
         {position.content}
       </p>
 
@@ -88,7 +88,7 @@ export function PositionCard({ position, color, isSelected, onClick }: PositionC
                 <svg className="w-3.5 h-3.5 text-slate-gray shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                 </svg>
-                <span className="text-[9px] text-slate-gray truncate max-w-[60px]">
+                <span className="text-[10px] text-slate-gray truncate max-w-[60px]">
                   {att.filename}
                 </span>
               </a>

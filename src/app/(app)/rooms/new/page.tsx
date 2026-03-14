@@ -173,15 +173,15 @@ export default function CreateRoomPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-xl font-bold text-white mb-1">
+    <div className="max-w-2xl mx-auto p-8">
+      <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
         Create Decision Room
       </h1>
-      <p className="text-sm text-slate-gray mb-8">
+      <p className="text-sm text-slate-gray mb-10">
         Define the topic, pick a decision type, select your team.
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-10">
         {/* --- Topic --- */}
         <div>
           <label className="block text-xs font-semibold text-slate-gray uppercase tracking-wider mb-2">
@@ -192,7 +192,7 @@ export default function CreateRoomPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            className="bg-navy-light border-white/10 text-white placeholder:text-slate-gray"
+            className=""
           />
         </div>
 
@@ -205,7 +205,7 @@ export default function CreateRoomPage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className="bg-navy-light border-white/10 text-white placeholder:text-slate-gray resize-none"
+            className="resize-none"
           />
         </div>
 
@@ -218,8 +218,8 @@ export default function CreateRoomPage() {
           {teamsLoading ? (
             <div className="text-xs text-slate-gray py-4 text-center">Loading teams...</div>
           ) : teams.length === 0 ? (
-            <div className="bg-navy-light border border-white/10 rounded-lg p-4">
-              <p className="text-xs text-slate-gray mb-3">
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-5">
+              <p className="text-sm text-slate-gray mb-4">
                 You need a team to create a room. Create one to get started.
               </p>
               <div className="flex gap-2">
@@ -233,13 +233,12 @@ export default function CreateRoomPage() {
                       handleCreateTeam();
                     }
                   }}
-                  className="bg-navy border-white/10 text-white placeholder:text-slate-gray"
                 />
                 <Button
                   type="button"
                   onClick={handleCreateTeam}
                   disabled={creatingTeam || !newTeamName.trim()}
-                  className="bg-teal hover:bg-teal-light text-white text-xs shrink-0"
+                  className="shrink-0"
                 >
                   {creatingTeam ? "Creating..." : "Create Team"}
                 </Button>
@@ -251,7 +250,7 @@ export default function CreateRoomPage() {
               <select
                 value={selectedTeamId}
                 onChange={(e) => handleTeamSelect(e.target.value)}
-                className="w-full bg-navy-light border border-white/10 text-white text-sm rounded-lg px-3 py-2.5 outline-none focus:border-teal/50 mb-3"
+                className="w-full bg-white/[0.04] border border-white/[0.08] text-white text-sm rounded-lg px-3 py-2.5 outline-none focus:border-teal/50 transition-colors mb-3"
               >
                 <option value="">Select a team...</option>
                 {teams.map((team) => (
@@ -273,14 +272,14 @@ export default function CreateRoomPage() {
                       handleCreateTeam();
                     }
                   }}
-                  className="bg-navy-light border-white/10 text-white text-xs placeholder:text-slate-gray"
+                  className=""
                 />
                 <Button
                   type="button"
                   onClick={handleCreateTeam}
                   disabled={creatingTeam || !newTeamName.trim()}
                   variant="secondary"
-                  className="bg-navy-light border border-white/10 text-white hover:bg-white/5 text-xs shrink-0"
+                  className="shrink-0"
                 >
                   {creatingTeam ? "..." : "Create"}
                 </Button>
@@ -298,10 +297,10 @@ export default function CreateRoomPage() {
                         type="button"
                         onClick={() => toggleMember(member.userId)}
                         disabled={isCreator}
-                        className={`w-full flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all text-left ${
+                        className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3 transition-all duration-200 text-left ${
                           isSelected
-                            ? "border-teal/40 bg-teal/5"
-                            : "border-white/10 bg-navy-light hover:border-white/20"
+                            ? "border-teal/40 bg-teal/5 shadow-[var(--glow-teal-sm)]"
+                            : "border-white/[0.06] bg-white/[0.03] hover:border-white/[0.10]"
                         } ${isCreator ? "opacity-70 cursor-default" : ""}`}
                       >
                         {/* Checkbox */}
@@ -319,7 +318,7 @@ export default function CreateRoomPage() {
                           )}
                         </div>
                         {/* Avatar */}
-                        <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white shrink-0">
                           {(member.user.name || member.user.email)[0].toUpperCase()}
                         </div>
                         {/* Info */}
@@ -327,15 +326,15 @@ export default function CreateRoomPage() {
                           <p className="text-sm text-white font-medium truncate">
                             {member.user.name || member.user.email.split("@")[0]}
                             {isCreator && (
-                              <span className="text-[10px] text-teal ml-2 font-normal">you (auto-included)</span>
+                              <span className="text-xs text-teal ml-2 font-normal">you (auto-included)</span>
                             )}
                           </p>
-                          <p className="text-[10px] text-slate-gray truncate">{member.user.email}</p>
+                          <p className="text-xs text-slate-gray truncate">{member.user.email}</p>
                         </div>
                       </button>
                     );
                   })}
-                  <p className="text-[10px] text-slate-gray mt-1">
+                  <p className="text-xs text-slate-gray mt-2">
                     {selectedUserIds.size + 1} participant{selectedUserIds.size + 1 !== 1 ? "s" : ""} selected (including you)
                   </p>
                 </div>
@@ -357,10 +356,10 @@ export default function CreateRoomPage() {
                   key={dt.id}
                   type="button"
                   onClick={() => selectType(dt.id)}
-                  className={`text-left rounded-lg border p-3 transition-all ${
+                  className={`text-left rounded-xl border p-4 transition-all duration-200 ${
                     selected
-                      ? "border-teal bg-teal/10"
-                      : "border-white/10 bg-navy-light hover:border-white/20"
+                      ? "border-teal/40 bg-teal/5 shadow-[var(--glow-teal-sm)]"
+                      : "border-white/[0.06] bg-white/[0.03] hover:border-white/[0.10] hover:bg-white/[0.04]"
                   }`}
                 >
                   <div className="flex items-baseline gap-2">
@@ -394,7 +393,7 @@ export default function CreateRoomPage() {
               {criteria.map((c) => (
                 <div
                   key={c.name}
-                  className="flex items-center justify-between bg-navy-light border border-white/10 rounded-lg px-4 py-3"
+                  className="flex items-center justify-between bg-white/[0.03] border border-white/[0.06] rounded-xl px-5 py-3.5"
                 >
                   <span className="text-sm text-white font-medium">
                     {c.name}
@@ -402,7 +401,7 @@ export default function CreateRoomPage() {
                   <button
                     type="button"
                     onClick={() => toggleMustHave(c.name)}
-                    className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded transition-colors ${
+                    className={`text-xs uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-lg transition-colors ${
                       c.isMustHave
                         ? "bg-red-500/20 text-red-400"
                         : "bg-white/5 text-slate-gray hover:text-white/60"
@@ -463,7 +462,7 @@ export default function CreateRoomPage() {
                     addCustomCriterion();
                   }
                 }}
-                className="bg-navy-light border-white/10 text-white placeholder:text-slate-gray"
+                className=""
               />
               <Button
                 type="button"
@@ -480,7 +479,7 @@ export default function CreateRoomPage() {
                 {criteria.map((c) => (
                   <div
                     key={c.name}
-                    className="flex items-center justify-between bg-navy-light border border-white/10 rounded-lg px-4 py-3"
+                    className="flex items-center justify-between bg-white/[0.03] border border-white/[0.06] rounded-xl px-5 py-3.5"
                   >
                     <span className="text-sm text-white font-medium">
                       {c.name}
@@ -489,7 +488,7 @@ export default function CreateRoomPage() {
                       <button
                         type="button"
                         onClick={() => toggleMustHave(c.name)}
-                        className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded transition-colors ${
+                        className={`text-xs uppercase tracking-wider font-bold px-2.5 py-0.5 rounded-lg transition-colors ${
                           c.isMustHave
                             ? "bg-red-500/20 text-red-400"
                             : "bg-white/5 text-slate-gray hover:text-white/60"
@@ -546,7 +545,7 @@ export default function CreateRoomPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-teal hover:bg-teal-light text-white font-semibold py-3"
+          className="w-full h-11 font-semibold"
         >
           {loading ? "Creating..." : "Create Decision Room"}
         </Button>

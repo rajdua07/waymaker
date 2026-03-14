@@ -66,10 +66,10 @@ function buildEdges(synthesis: SynthesisData | null, participants: Array<{ id: s
 }
 
 const statusColors: Record<string, string> = {
-  collecting: "bg-gold/20 text-gold",
-  analyzing: "bg-blue-accent/20 text-blue-accent",
-  converging: "bg-teal/20 text-teal",
-  decided: "bg-agree/20 text-agree",
+  collecting: "bg-gold/15 text-gold border-gold/20",
+  analyzing: "bg-blue-accent/15 text-blue-accent border-blue-accent/20",
+  converging: "bg-teal/15 text-teal border-teal/20",
+  decided: "bg-agree/15 text-agree border-agree/20",
 };
 
 export default function DecisionRoomPage() {
@@ -184,10 +184,10 @@ export default function DecisionRoomPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Room Header */}
-      <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between shrink-0">
+      <div className="px-6 py-4 border-b border-white/[0.04] bg-white/[0.02] flex items-center justify-between shrink-0">
         <div>
-          <h1 className="text-sm font-bold text-white">{room.title}</h1>
-          <p className="text-[10px] text-slate-gray mt-0.5">
+          <h1 className="text-base font-bold text-white">{room.title}</h1>
+          <p className="text-xs text-slate-gray mt-1">
             {room.participants.length} participants &middot; Round {room.currentRound}
             {room.currentRound > 1 && (
               <span className="text-white/30"> &middot; Iterating toward consensus</span>
@@ -195,7 +195,8 @@ export default function DecisionRoomPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className={`${statusColors[room.status] || ""} text-[10px] font-semibold`}>
+          <Badge className={`${statusColors[room.status] || ""} text-xs font-semibold`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current" />
             {room.status}
           </Badge>
           {canSynthesize && (
@@ -203,7 +204,6 @@ export default function DecisionRoomPage() {
               onClick={handleSynthesize}
               disabled={synthesizing}
               size="sm"
-              className="bg-teal hover:bg-teal-light text-white text-xs h-8"
             >
               {synthesizing ? "Analyzing..." : "Run Synthesis"}
             </Button>
@@ -215,13 +215,13 @@ export default function DecisionRoomPage() {
                   onClick={handleNewRound}
                   size="sm"
                   variant="secondary"
-                  className="bg-navy-light border border-gold/30 text-gold text-xs h-8 hover:bg-gold/5"
+                  className="border-gold/30 text-gold hover:bg-gold/5"
                 >
                   Refine → Round {room.currentRound + 1}
                 </Button>
-                <div className="absolute top-full right-0 mt-1 w-56 bg-navy-light border border-white/10 rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
-                  <p className="text-[10px] text-white font-semibold mb-1">Start a refinement round</p>
-                  <p className="text-[10px] text-slate-gray leading-relaxed">
+                <div className="absolute top-full right-0 mt-1 w-56 bg-surface-2 border border-white/[0.08] rounded-xl p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-[var(--shadow-elevated)]">
+                  <p className="text-xs text-white font-semibold mb-1">Start a refinement round</p>
+                  <p className="text-xs text-slate-gray leading-relaxed">
                     Participants can revise their positions based on the synthesis. The AI will re-analyze and track how opinions evolve toward consensus.
                   </p>
                 </div>
@@ -229,7 +229,7 @@ export default function DecisionRoomPage() {
               <Button
                 onClick={handleDecide}
                 size="sm"
-                className="bg-agree hover:bg-agree/80 text-white text-xs h-8"
+                className="bg-agree hover:bg-agree/80 text-white"
               >
                 Accept &amp; Log Decision
               </Button>
@@ -239,18 +239,18 @@ export default function DecisionRoomPage() {
       </div>
 
       {/* Three-panel layout */}
-      <div className="flex-1 grid grid-cols-[300px_1fr_320px] overflow-hidden">
+      <div className="flex-1 grid grid-cols-[320px_1fr_340px] overflow-hidden">
         {/* Left: Positions */}
-        <div className="border-r border-white/[0.06] flex flex-col overflow-hidden">
-          <div className="p-3 border-b border-white/[0.06]">
+        <div className="border-r border-white/[0.04] flex flex-col overflow-hidden">
+          <div className="px-4 py-3.5 border-b border-white/[0.04] bg-white/[0.01]">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-[11px] font-bold text-slate-gray uppercase tracking-[2px]">
+              <h2 className="text-xs font-bold text-slate-gray uppercase tracking-[2px]">
                 Positions ({displayPositions.length})
               </h2>
               {!isViewingCurrent && (
                 <button
                   onClick={() => setViewingRound(null)}
-                  className="text-[10px] text-teal hover:text-teal-light font-medium"
+                  className="text-xs text-teal hover:text-teal-light font-medium transition-colors"
                 >
                   ← Current
                 </button>
@@ -263,10 +263,10 @@ export default function DecisionRoomPage() {
                   <button
                     key={r}
                     onClick={() => setViewingRound(r === room.currentRound ? null : r)}
-                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
                       displayRound === r
-                        ? "bg-teal/20 text-teal"
-                        : "bg-white/[0.04] text-slate-gray hover:text-white hover:bg-white/[0.08]"
+                        ? "bg-teal/15 text-teal border border-teal/20"
+                        : "bg-white/[0.04] text-slate-gray hover:text-white hover:bg-white/[0.08] border border-transparent"
                     }`}
                   >
                     R{r}
@@ -279,14 +279,14 @@ export default function DecisionRoomPage() {
 
           {/* Viewing past round banner */}
           {!isViewingCurrent && (
-            <div className="px-3 py-2 bg-gold/5 border-b border-gold/10">
-              <p className="text-[10px] text-gold font-medium">
+            <div className="px-4 py-2.5 bg-gold/5 border-b border-gold/15">
+              <p className="text-xs text-gold font-medium">
                 Viewing Round {displayRound} (historical)
               </p>
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          <div className="flex-1 overflow-y-auto p-4 space-y-2.5 scrollbar-thin">
             {displayPositions.map((pos) => (
               <PositionCard
                 key={pos.id}
@@ -316,8 +316,9 @@ export default function DecisionRoomPage() {
         </div>
 
         {/* Center: Arena Graph */}
-        <div className="flex items-center justify-center p-4 overflow-hidden">
-          <div className="w-full max-w-[600px] aspect-square">
+        <div className="flex items-center justify-center p-6 overflow-hidden">
+          <div className="w-full max-w-[600px] aspect-square relative">
+            <div className="absolute inset-0 rounded-2xl bg-white/[0.01] border border-white/[0.04]" />
             <ArenaGraph
               nodes={arenaNodes}
               edges={arenaEdges}
@@ -331,13 +332,13 @@ export default function DecisionRoomPage() {
         </div>
 
         {/* Right: Analysis + Context Panel */}
-        <div className="border-l border-white/[0.06] overflow-hidden flex flex-col">
-          <div className="p-3 border-b border-white/[0.06]">
-            <h2 className="text-[11px] font-bold text-slate-gray uppercase tracking-[2px]">
+        <div className="border-l border-white/[0.04] overflow-hidden flex flex-col">
+          <div className="px-4 py-3.5 border-b border-white/[0.04] bg-white/[0.01]">
+            <h2 className="text-xs font-bold text-slate-gray uppercase tracking-[2px]">
               Analysis
             </h2>
           </div>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto scrollbar-thin">
             <div className="p-4">
               <ContextDocuments
                 roomId={roomId}
@@ -346,7 +347,7 @@ export default function DecisionRoomPage() {
                 onUpdated={fetchRoom}
               />
             </div>
-            <div className="border-t border-white/[0.06]">
+            <div className="border-t border-white/[0.04]">
               <AnalysisPanel
                 status={isViewingCurrent ? room.status : "converging"}
                 synthesis={displaySynthesis}
